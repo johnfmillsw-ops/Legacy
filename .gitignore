@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables (IMPORTANT — do NOT commit your .env)
+.env
+*.env
+
+# Logs and data
+*.log
+data/
+exports/
+
+# MacOS
+.DS_Store

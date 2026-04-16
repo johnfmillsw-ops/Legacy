@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Legacy</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #fdfdfd;
+        color: #1f2937;
+        line-height: 1.55;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 500px;
+        margin: 80px auto 40px;
+        padding: 0 20px;
+      }
+      .card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 32px 24px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      }
+      h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0 0 24px;
+        text-align: center;
+      }
+      .flash {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1e40af;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+      }
+      label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      button {
+        width: 100%;
+        margin-top: 16px;
+        padding: 12px;
+        background: #1f2937;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      button:hover {
+        background: #111827;
+      }
+      @media (max-width: 500px) {
+        .container { margin: 60px auto 20px; padding: 0 16px; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="container">
+      <h1>Legacy</h1>
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="flash">
+            {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <div class="card">
+        <form method="post">
+          <label for="subject">Subject name</label>
+          <input id="subject" name="subject" placeholder="e.g., david" required autofocus />
+          <button type="submit">Open</button>
+        </form>
+      </div>
+    </div>
+
+  </body>
+</html>
