@@ -117,7 +117,7 @@ def dashboard():
     profile = load_or_create(subject)
     consent = profile.get("consent", {})
     entries = profile.get("entries", [])
-    has_key = bool(os.getenv("OPENAI_API_KEY", "").strip())
+    has_key = bool(os.getenv("XAI_API_KEY", "").strip())
 
     return render_template(
         "dashboard.html",
