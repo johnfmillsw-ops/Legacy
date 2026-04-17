@@ -261,7 +261,7 @@ def guidance():
 
     profile = load_or_create(subject)
     consent = profile.get("consent", {})
-    has_key = bool(os.getenv("OPENAI_API_KEY", "").strip())
+    has_key = bool(os.getenv("XAI_API_KEY", "").strip())
 
     if request.method == "POST":
         question = (request.form.get("question") or "").strip()
@@ -270,7 +270,7 @@ def guidance():
             return redirect(url_for("guidance"))
 
         if not has_key:
-            flash("OPENAI_API_KEY is not set in this terminal/session.")
+            flash("XAI_API_KEY is not set in this terminal/session.")
             return redirect(url_for("guidance"))
 
         if not consent.get("allow_remote_processing"):
