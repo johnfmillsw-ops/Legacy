@@ -39,14 +39,11 @@ from database import (
     create_profile,
     get_user_profiles,
     get_profile,
+    load_profile_data,
+    save_profile_data,
 )
 
-from storage import (
-    load_json,
-    save_json,
-    profile_path,
-    save_upload,
-)
+from storage import save_upload
 
 from questions import QUESTIONS
 from guidance import generate_guidance_response
@@ -216,19 +213,17 @@ def load_or_create(record):
     if authorized is None:
         abort(403)
 
-    path = profile_path(authorized["id"])
+    profile = authorized["profile_data"]
 
-    try:
-
-        profile = load_json(path)
-
-    except FileNotFoundError:
+    if not profile:
 
         profile = ensure_profile(authorized)
 
-        save_json(path, profile)
-
-        return profile
+        save_profile_data(
+            authorized["id"],
+            current_user.id,
+            profile,
+        )
 
     meta = profile.get("meta", {})
 
@@ -243,26 +238,17 @@ def load_or_create(record):
 
 def save_profile(record, profile):
 
-    authorized = get_profile(
-        record["id"],
-        current_user.id,
-    )
+    try:
 
-    if authorized is None:
+        save_profile_data(
+            record["id"],
+            current_user.id,
+            profile,
+        )
+
+    except PermissionError:
+
         abort(403)
-
-    meta = profile.get("meta", {})
-
-    if (
-        meta.get("owner_id") != current_user.id
-        or meta.get("profile_id") != authorized["id"]
-    ):
-        abort(403)
-
-    save_json(
-        profile_path(authorized["id"]),
-        profile,
-    )
 
 
 def remote_allowed(profile):

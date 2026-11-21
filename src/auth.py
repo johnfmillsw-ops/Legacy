@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-import sqlite3
+import psycopg
 import secrets
 
 from flask import (
@@ -215,7 +215,7 @@ def register():
                 password_hash,
             )
 
-        except sqlite3.IntegrityError:
+        except psycopg.errors.UniqueViolation:
 
             flash(
                 "Unable to register with this email."

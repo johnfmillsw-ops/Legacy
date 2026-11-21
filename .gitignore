@@ -21,3 +21,5 @@ exports/
 
 # MacOS
 .DS_Store
+
+backups/
