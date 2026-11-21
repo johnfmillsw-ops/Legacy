@@ -44,11 +44,14 @@ from database import (
 )
 
 from storage import save_upload
-
 from questions import QUESTIONS
 from guidance import generate_guidance_response
 from exporter import render_summary_md
-from summarizer import update_core_summary, extract_from_upload
+from summarizer import (
+    update_core_summary,
+    extract_upload_text,
+)
+from index_knowledge import index_document
 
 
 # --------------------------------------------------
@@ -67,14 +70,18 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=(
-        os.getenv("LEGACY_SECURE_COOKIES", "false").lower()
-        == "true"
+        os.getenv(
+            "LEGACY_SECURE_COOKIES",
+            "false",
+        ).lower() == "true"
     ),
 )
 
 initialize_database()
 initialize_auth(app)
+from memory_review import memory_review_bp
 
+app.register_blueprint(memory_review_bp)
 
 # --------------------------------------------------
 # Application-wide security
@@ -90,8 +97,15 @@ def protect_post_requests():
 
     if request.method == "POST":
 
-        expected = session.get("_csrf_token", "")
-        provided = request.form.get("_csrf_token", "")
+        expected = session.get(
+            "_csrf_token",
+            "",
+        )
+
+        provided = request.form.get(
+            "_csrf_token",
+            "",
+        )
 
         if not expected or not secrets.compare_digest(
             expected,
@@ -103,10 +117,21 @@ def protect_post_requests():
 @app.after_request
 def security_headers(response):
 
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Referrer-Policy"] = "no-referrer"
-    response.headers["Cache-Control"] = "no-store"
+    response.headers[
+        "X-Content-Type-Options"
+    ] = "nosniff"
+
+    response.headers[
+        "X-Frame-Options"
+    ] = "DENY"
+
+    response.headers[
+        "Referrer-Policy"
+    ] = "no-referrer"
+
+    response.headers[
+        "Cache-Control"
+    ] = "no-store"
 
     return response
 
@@ -158,7 +183,7 @@ def ensure_profile(record):
             "scope": "local_storage_only",
             "allow_remote_processing": False,
             "remote_consent_utc": None,
-            "remote_vendor": "OpenAI and xAI",
+            "remote_vendor": "xAI",
         },
         "values": {},
         "stories": [],
@@ -261,6 +286,15 @@ def remote_allowed(profile):
     )
 
 
+def local_processing_allowed(profile):
+
+    consent = profile.get("consent", {})
+
+    return bool(
+        consent.get("has_consent")
+    )
+
+
 # --------------------------------------------------
 # Profile management
 # --------------------------------------------------
@@ -347,13 +381,18 @@ def dashboard():
     return render_template(
         "dashboard.html",
         subject=record["display_name"],
-        entry_count=len(profile.get("entries", [])),
+        entry_count=len(
+            profile.get("entries", [])
+        ),
         consent=profile.get("consent", {}),
         has_key=bool(
             os.getenv("XAI_API_KEY", "").strip()
         ),
         categories=list(QUESTIONS.keys()),
-        core_summary=profile.get("core_summary", ""),
+        core_summary=profile.get(
+            "core_summary",
+            "",
+        ),
         core_summary_meta=profile.get(
             "core_summary_meta",
             {},
@@ -445,7 +484,7 @@ def update_core_summary_route():
 
     except Exception:
 
-        app.logger.warning(
+        app.logger.exception(
             "Core summary refresh failed."
         )
 
@@ -500,9 +539,7 @@ def interview(category):
 
     profile = load_or_create(record)
 
-    if not profile.get("consent", {}).get(
-        "has_consent"
-    ):
+    if not local_processing_allowed(profile):
 
         flash(
             "Consent is required before "
@@ -612,9 +649,7 @@ def interview_skip(category):
 
     profile = load_or_create(record)
 
-    if not profile.get("consent", {}).get(
-        "has_consent"
-    ):
+    if not local_processing_allowed(profile):
         return redirect(url_for("dashboard"))
 
     prompts = QUESTIONS[category]
@@ -637,7 +672,7 @@ def interview_skip(category):
 
 
 # --------------------------------------------------
-# AI guidance
+# AI guidance with semantic retrieval
 # --------------------------------------------------
 
 @app.route("/guidance", methods=["GET", "POST"])
@@ -712,7 +747,7 @@ def guidance():
 
         except Exception:
 
-            app.logger.warning(
+            app.logger.exception(
                 "Guidance generation failed."
             )
 
@@ -763,10 +798,13 @@ def export():
 
 
 # --------------------------------------------------
-# Document ingestion
+# Document ingestion with semantic indexing
 # --------------------------------------------------
 
-@app.route("/upload-summary", methods=["POST"])
+@app.route(
+    "/upload-summary",
+    methods=["POST"],
+)
 @login_required
 def upload_summary():
 
@@ -777,9 +815,10 @@ def upload_summary():
 
     profile = load_or_create(record)
 
-    if not profile.get("consent", {}).get(
-        "has_consent"
-    ):
+    # Local consent is sufficient for local indexing.
+    # Remote processing consent is checked separately
+    # before any document content is sent to Grok.
+    if not local_processing_allowed(profile):
 
         flash(
             "Consent is required before "
@@ -796,73 +835,145 @@ def upload_summary():
 
         return redirect(url_for("dashboard"))
 
+    original_filename = Path(
+        file.filename
+    ).name
+
     path = None
 
     try:
 
+        # Save to a temporary application upload path.
+        # The existing storage module validates extensions.
         path = save_upload(
             record["id"],
             file,
         )
 
-        extracted_entries = extract_from_upload(
-            profile,
-            path,
+        # Extract the complete available text.
+        # No character-based truncation.
+        original_text = extract_upload_text(
+            path
         )
 
-        if not extracted_entries:
+        # Recheck current consent before indexing.
+        latest_record = get_profile(
+            record["id"],
+            current_user.id,
+        )
 
-            flash(
-                "File was empty or could "
-                "not be processed."
+        if latest_record is None:
+            abort(403)
+
+        latest_profile = latest_record[
+            "profile_data"
+        ]
+
+        if not local_processing_allowed(
+            latest_profile
+        ):
+            abort(403)
+
+        # Store the original text and its searchable
+        # embeddings in PostgreSQL atomically.
+        result = index_document(
+            profile_id=record["id"],
+            owner_id=current_user.id,
+            title=original_filename,
+            original_text=original_text,
+            source_type="document",
+            metadata={
+                "original_filename": original_filename,
+                "file_extension": path.suffix.lower(),
+                "ingestion_method": "web_upload",
+            },
+            processing_authorized=True,
+        )
+
+        # Extract memories automatically after successful indexing.
+        # Run separately so the upload request does not wait for Grok.
+        from threading import Thread
+        from memory_extraction import (
+            extract_document_memories,
+            find_document,
+        )
+
+        uploaded_document = find_document(
+            record["id"],
+            original_filename,
+        )
+
+        if uploaded_document is None:
+            app.logger.error(
+                "Indexed document could not be found for extraction."
+            )
+        elif remote_allowed(latest_profile):
+            extraction_profile_id = record["id"]
+            extraction_owner_id = current_user.id
+            extraction_document_id = uploaded_document["id"]
+            extraction_chunk_count = result["chunk_count"]
+
+            def process_uploaded_memories():
+                try:
+                    extract_document_memories(
+                        profile_id=extraction_profile_id,
+                        owner_id=extraction_owner_id,
+                        document_id=extraction_document_id,
+                        max_chunks=extraction_chunk_count,
+                    )
+                except Exception:
+                    app.logger.exception(
+                        "Automatic memory extraction failed."
+                    )
+
+            Thread(
+                target=process_uploaded_memories,
+                daemon=True,
+            ).start()
+        else:
+            app.logger.info(
+                "Document indexed locally; remote extraction disabled."
             )
 
-            return redirect(url_for("dashboard"))
-
-        profile.setdefault(
-            "entries",
-            [],
-        ).extend(extracted_entries)
-
-        save_profile(record, profile)
-
-        if remote_allowed(profile):
-
-            try:
-
-                profile = update_core_summary(
-                    profile,
-                    force=True,
-                )
-
-                save_profile(record, profile)
-
-            except Exception:
-
-                flash(
-                    "Document saved, but the "
-                    "AI summary could not be refreshed."
-                )
+        # Do not duplicate the complete document
+        # inside profile_data JSONB.
+        #
+        # The document and all searchable chunks
+        # now live in PostgreSQL.
+        #
+        # Core summaries can be refreshed separately
+        # through the existing dashboard action.
 
         flash(
-            f"Upload successful. "
-            f"{len(extracted_entries)} entries added."
+            "Document indexed successfully. "
+            f"{result['chunk_count']} searchable "
+            "chunks created."
         )
 
     except ValueError as error:
 
         flash(f"Upload error: {error}")
 
+    except PermissionError:
+
+        abort(403)
+
     except Exception:
 
-        app.logger.warning(
+        app.logger.exception(
             "Document ingestion failed."
         )
 
-        flash("Unable to process the document.")
+        flash(
+            "Unable to process or index "
+            "the document."
+        )
 
     finally:
 
+        # Remove the temporary uploaded file.
+        # The extracted text is preserved in PostgreSQL
+        # after successful indexing.
         if path is not None:
             path.unlink(missing_ok=True)
 
