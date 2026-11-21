@@ -3,14 +3,20 @@ from __future__ import annotations
 
 import os
 import sys
+import secrets
+
+from io import BytesIO
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Any, Dict, List
 
 HERE = Path(__file__).resolve().parent
 
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from flask import (
     Flask,
@@ -20,18 +26,31 @@ from flask import (
     session,
     url_for,
     flash,
+    abort,
+    send_file,
+)
+
+from flask_login import login_required, current_user
+
+from auth import initialize_auth, csrf_token
+
+from database import (
+    initialize_database,
+    create_profile,
+    get_user_profiles,
+    get_profile,
 )
 
 from storage import (
     load_json,
-    profile_path,
     save_json,
+    profile_path,
     save_upload,
 )
 
 from questions import QUESTIONS
 from guidance import generate_guidance_response
-from exporter import write_summary_md
+from exporter import render_summary_md
 from summarizer import update_core_summary, extract_from_upload
 
 
@@ -41,21 +60,77 @@ from summarizer import update_core_summary, extract_from_upload
 
 app = Flask(__name__)
 
-app.secret_key = os.getenv(
-    "LEGACY_FLASK_SECRET",
-    "dev-secret-change-me",
+app.secret_key = (
+    os.getenv("LEGACY_FLASK_SECRET")
+    or secrets.token_hex(32)
 )
 
+app.config.update(
+    MAX_CONTENT_LENGTH=10 * 1024 * 1024,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=(
+        os.getenv("LEGACY_SECURE_COOKIES", "false").lower()
+        == "true"
+    ),
+)
+
+initialize_database()
+initialize_auth(app)
+
 
 # --------------------------------------------------
-# Default identity anchor
+# Application-wide security
 # --------------------------------------------------
 
-def default_identity_anchor() -> Dict[str, Any]:
+@app.context_processor
+def inject_csrf_token():
+    return {"csrf_token": csrf_token}
+
+
+@app.before_request
+def protect_post_requests():
+
+    if request.method == "POST":
+
+        expected = session.get("_csrf_token", "")
+        provided = request.form.get("_csrf_token", "")
+
+        if not expected or not secrets.compare_digest(
+            expected,
+            provided,
+        ):
+            abort(403)
+
+
+@app.after_request
+def security_headers(response):
+
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Cache-Control"] = "no-store"
+
+    return response
+
+
+# --------------------------------------------------
+# Profile initialization
+# --------------------------------------------------
+
+def utc_now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def default_identity_anchor():
+
     return {
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "timestamp_utc": utc_now(),
         "category": "identity",
-        "prompt": "Who is this person? Provide a full, honest overview.",
+        "prompt": (
+            "Who is this person? Provide a full, "
+            "honest overview."
+        ),
         "answer": "",
         "tags": [
             "identity",
@@ -67,19 +142,18 @@ def default_identity_anchor() -> Dict[str, Any]:
     }
 
 
-# --------------------------------------------------
-# New profile initialization
-# --------------------------------------------------
+def ensure_profile(record):
 
-def ensure_profile(subject: str) -> Dict[str, Any]:
     return {
         "meta": {
             "project": "Legacy",
-            "version": "0.7.0-web",
-            "created_utc": datetime.now(timezone.utc).isoformat(),
+            "version": "2.0-dev",
+            "created_utc": utc_now(),
+            "profile_id": record["id"],
+            "owner_id": record["owner_id"],
         },
         "subject": {
-            "display_name": subject,
+            "display_name": record["display_name"],
         },
         "consent": {
             "has_consent": False,
@@ -87,14 +161,14 @@ def ensure_profile(subject: str) -> Dict[str, Any]:
             "scope": "local_storage_only",
             "allow_remote_processing": False,
             "remote_consent_utc": None,
-            "remote_vendor": "openai",
+            "remote_vendor": "OpenAI and xAI",
         },
         "values": {},
         "stories": [],
         "guidance_principles": [
-            "Tell the truth clearly and kindly.",
-            "Choose the option that increases responsibility and long-term stability.",
-            "When overwhelmed: slow down, name the constraint, take the next right step.",
+            "Base guidance on available evidence.",
+            "Distinguish facts from assumptions.",
+            "Acknowledge missing information.",
         ],
         "entries": [],
         "core_summary": "",
@@ -108,63 +182,105 @@ def ensure_profile(subject: str) -> Dict[str, Any]:
 
 
 # --------------------------------------------------
-# Profile loading and migration
+# Profile ownership enforcement
 # --------------------------------------------------
 
-def load_or_create(subject: str) -> Dict[str, Any]:
-    path = profile_path(subject)
+def active_profile():
+
+    if not current_user.is_authenticated:
+        return None
+
+    profile_id = session.get("profile_id")
+
+    if not profile_id:
+        return None
+
+    record = get_profile(
+        profile_id,
+        current_user.id,
+    )
+
+    if record is None:
+        session.pop("profile_id", None)
+
+    return record
+
+
+def load_or_create(record):
+
+    authorized = get_profile(
+        record["id"],
+        current_user.id,
+    )
+
+    if authorized is None:
+        abort(403)
+
+    path = profile_path(authorized["id"])
 
     try:
+
         profile = load_json(path)
 
     except FileNotFoundError:
-        profile = ensure_profile(subject)
+
+        profile = ensure_profile(authorized)
+
         save_json(path, profile)
+
         return profile
 
-    defaults = ensure_profile(subject)
-    changed = False
+    meta = profile.get("meta", {})
 
-    # Restore missing top-level fields
-    for key, value in defaults.items():
-        if key not in profile:
-            profile[key] = value
-            changed = True
-
-    # Repair missing or invalid identity anchor
-    if not isinstance(profile.get("identity_anchor"), dict):
-        profile["identity_anchor"] = default_identity_anchor()
-        changed = True
-
-    # Restore missing identity anchor fields
-    for key, value in defaults["identity_anchor"].items():
-        if key not in profile["identity_anchor"]:
-            profile["identity_anchor"][key] = value
-            changed = True
-
-    if changed:
-        save_json(path, profile)
+    if (
+        meta.get("owner_id") != current_user.id
+        or meta.get("profile_id") != authorized["id"]
+    ):
+        abort(403)
 
     return profile
 
 
-def save_profile(
-    subject: str,
-    profile: Dict[str, Any],
-) -> None:
-    save_json(profile_path(subject), profile)
+def save_profile(record, profile):
+
+    authorized = get_profile(
+        record["id"],
+        current_user.id,
+    )
+
+    if authorized is None:
+        abort(403)
+
+    meta = profile.get("meta", {})
+
+    if (
+        meta.get("owner_id") != current_user.id
+        or meta.get("profile_id") != authorized["id"]
+    ):
+        abort(403)
+
+    save_json(
+        profile_path(authorized["id"]),
+        profile,
+    )
 
 
-def require_subject() -> str:
-    subject = session.get("subject")
-    return str(subject).strip() if subject else ""
+def remote_allowed(profile):
+
+    consent = profile.get("consent", {})
+
+    return bool(
+        consent.get("has_consent")
+        and consent.get("allow_remote_processing")
+    )
 
 
 # --------------------------------------------------
-# Home page
+# Profile management
 # --------------------------------------------------
 
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def index():
 
     if request.method == "POST":
@@ -173,17 +289,58 @@ def index():
             request.form.get("subject") or ""
         ).strip()
 
-        if not subject:
-            flash("Enter a subject name.")
+        if not subject or len(subject) > 120:
+
+            flash(
+                "Enter a profile name between "
+                "1 and 120 characters."
+            )
+
             return redirect(url_for("index"))
 
-        load_or_create(subject)
+        record = create_profile(
+            current_user.id,
+            subject,
+        )
 
-        session["subject"] = subject
+        load_or_create(record)
+
+        session["profile_id"] = record["id"]
+
+        flash("Knowledge profile created.")
 
         return redirect(url_for("dashboard"))
 
-    return render_template("index.html")
+    profiles = get_user_profiles(
+        current_user.id
+    )
+
+    return render_template(
+        "profiles.html",
+        profiles=profiles,
+    )
+
+
+@app.route(
+    "/profiles/<profile_id>/select",
+    methods=["POST"],
+)
+@login_required
+def select_profile(profile_id):
+
+    record = get_profile(
+        profile_id,
+        current_user.id,
+    )
+
+    if record is None:
+        abort(404)
+
+    load_or_create(record)
+
+    session["profile_id"] = record["id"]
+
+    return redirect(url_for("dashboard"))
 
 
 # --------------------------------------------------
@@ -191,28 +348,24 @@ def index():
 # --------------------------------------------------
 
 @app.route("/dashboard")
+@login_required
 def dashboard():
 
-    subject = require_subject()
+    record = active_profile()
 
-    if not subject:
+    if record is None:
         return redirect(url_for("index"))
 
-    profile = load_or_create(subject)
-
-    consent = profile.get("consent", {})
-    entries = profile.get("entries", [])
-
-    has_key = bool(
-        os.getenv("XAI_API_KEY", "").strip()
-    )
+    profile = load_or_create(record)
 
     return render_template(
         "dashboard.html",
-        subject=subject,
-        entry_count=len(entries),
-        consent=consent,
-        has_key=has_key,
+        subject=record["display_name"],
+        entry_count=len(profile.get("entries", [])),
+        consent=profile.get("consent", {}),
+        has_key=bool(
+            os.getenv("XAI_API_KEY", "").strip()
+        ),
         categories=list(QUESTIONS.keys()),
         core_summary=profile.get("core_summary", ""),
         core_summary_meta=profile.get(
@@ -227,46 +380,39 @@ def dashboard():
 # --------------------------------------------------
 
 @app.route("/set-consent", methods=["POST"])
+@login_required
 def set_consent():
 
-    subject = require_subject()
+    record = active_profile()
 
-    if not subject:
+    if record is None:
         return redirect(url_for("index"))
 
-    profile = load_or_create(subject)
+    profile = load_or_create(record)
 
     has_consent = (
         request.form.get("has_consent") == "on"
     )
 
     allow_remote = (
-        request.form.get("allow_remote_processing") == "on"
-    )
-
-    profile.setdefault("consent", {})
-
-    profile["consent"]["has_consent"] = bool(
         has_consent
+        and request.form.get(
+            "allow_remote_processing"
+        ) == "on"
     )
 
-    profile["consent"]["consent_utc"] = (
-        datetime.now(timezone.utc).isoformat()
-        if has_consent
-        else None
-    )
+    profile["consent"].update({
+        "has_consent": has_consent,
+        "consent_utc": (
+            utc_now() if has_consent else None
+        ),
+        "allow_remote_processing": allow_remote,
+        "remote_consent_utc": (
+            utc_now() if allow_remote else None
+        ),
+    })
 
-    profile["consent"]["allow_remote_processing"] = bool(
-        allow_remote
-    )
-
-    profile["consent"]["remote_consent_utc"] = (
-        datetime.now(timezone.utc).isoformat()
-        if allow_remote
-        else None
-    )
-
-    save_profile(subject, profile)
+    save_profile(record, profile)
 
     flash("Consent settings saved.")
 
@@ -277,41 +423,71 @@ def set_consent():
 # Core summary
 # --------------------------------------------------
 
-@app.route("/update-core-summary", methods=["POST"])
+@app.route(
+    "/update-core-summary",
+    methods=["POST"],
+)
+@login_required
 def update_core_summary_route():
 
-    subject = require_subject()
+    record = active_profile()
 
-    if not subject:
+    if record is None:
         return redirect(url_for("index"))
 
-    profile = load_or_create(subject)
+    profile = load_or_create(record)
 
-    if not profile.get("consent", {}).get(
-        "allow_remote_processing"
-    ):
+    if not remote_allowed(profile):
+
         flash(
-            "Enable 'Allow remote processing' "
-            "before generating core summary."
+            "Local and remote processing consent "
+            "are required."
         )
 
         return redirect(url_for("dashboard"))
 
-    profile = update_core_summary(
-        profile,
-        force=True,
-    )
+    try:
 
-    save_profile(subject, profile)
+        profile = update_core_summary(
+            profile,
+            force=True,
+        )
 
-    meta = profile.get("core_summary_meta", {}) or {}
+        save_profile(record, profile)
 
-    flash(
-        "Core Summary updated "
-        f"(entries used: {meta.get('source_entry_count', 0)})."
-    )
+        flash("Core summary refresh completed.")
+
+    except Exception:
+
+        app.logger.warning(
+            "Core summary refresh failed."
+        )
+
+        flash("Unable to refresh core summary.")
 
     return redirect(url_for("dashboard"))
+
+
+# --------------------------------------------------
+# Interview utilities
+# --------------------------------------------------
+
+def question_index(prompts):
+
+    try:
+
+        idx = int(
+            request.args.get("i", "0") or "0"
+        )
+
+    except ValueError:
+
+        idx = 0
+
+    return max(
+        0,
+        min(idx, len(prompts) - 1),
+    )
 
 
 # --------------------------------------------------
@@ -322,40 +498,39 @@ def update_core_summary_route():
     "/interview/<category>",
     methods=["GET", "POST"],
 )
-def interview(category: str):
+@login_required
+def interview(category):
 
-    subject = require_subject()
+    record = active_profile()
 
-    if not subject:
+    if record is None:
         return redirect(url_for("index"))
 
-    category = category.strip()
-
     if category not in QUESTIONS:
-        flash("Unknown category.")
+
+        flash("Unknown interview category.")
+
         return redirect(url_for("dashboard"))
 
-    profile = load_or_create(subject)
+    profile = load_or_create(record)
 
-    consent = profile.get("consent", {})
+    if not profile.get("consent", {}).get(
+        "has_consent"
+    ):
 
-    if not consent.get("has_consent"):
         flash(
-            "Consent required before recording. "
-            "Enable consent on dashboard."
+            "Consent is required before "
+            "recording responses."
         )
 
         return redirect(url_for("dashboard"))
 
-    prompts: List[str] = QUESTIONS[category]
+    prompts = QUESTIONS[category]
 
-    try:
-        idx = int(request.args.get("i", "0") or "0")
+    if not prompts:
+        return redirect(url_for("dashboard"))
 
-    except ValueError:
-        idx = 0
-
-    idx = max(0, min(idx, len(prompts) - 1))
+    idx = question_index(prompts)
 
     prompt_text = prompts[idx]
 
@@ -369,8 +544,12 @@ def interview(category: str):
             request.form.get("tags") or ""
         ).strip()
 
-        if not answer:
-            flash("Answer cannot be empty (or click Skip).")
+        if not answer or len(answer) > 20000:
+
+            flash(
+                "Enter an answer between "
+                "1 and 20,000 characters."
+            )
 
             return redirect(
                 url_for(
@@ -381,31 +560,32 @@ def interview(category: str):
             )
 
         tags = [
-            tag.strip().lower()
+            tag.strip().lower()[:100]
             for tag in tags_raw.split(",")
             if tag.strip()
-        ]
+        ][:30]
 
         entry = {
-            "timestamp_utc": (
-                datetime.now(timezone.utc).isoformat()
-            ),
+            "timestamp_utc": utc_now(),
             "category": category,
             "prompt": prompt_text,
             "answer": answer,
             "tags": tags,
         }
 
-        profile.setdefault("entries", []).append(entry)
+        profile.setdefault(
+            "entries",
+            [],
+        ).append(entry)
 
-        save_profile(subject, profile)
+        save_profile(record, profile)
 
         nxt = idx + 1
 
         if nxt >= len(prompts):
 
             flash(
-                f"Saved. Finished category '{category}'."
+                f"Finished category '{category}'."
             )
 
             return redirect(url_for("dashboard"))
@@ -420,7 +600,7 @@ def interview(category: str):
 
     return render_template(
         "interview.html",
-        subject=subject,
+        subject=record["display_name"],
         category=category,
         idx=idx,
         total=len(prompts),
@@ -433,34 +613,32 @@ def interview(category: str):
 # --------------------------------------------------
 
 @app.route("/interview/<category>/skip")
-def interview_skip(category: str):
+@login_required
+def interview_skip(category):
 
-    subject = require_subject()
+    record = active_profile()
 
-    if not subject:
+    if record is None:
         return redirect(url_for("index"))
 
     if category not in QUESTIONS:
         return redirect(url_for("dashboard"))
 
+    profile = load_or_create(record)
+
+    if not profile.get("consent", {}).get(
+        "has_consent"
+    ):
+        return redirect(url_for("dashboard"))
+
     prompts = QUESTIONS[category]
 
-    try:
-        idx = int(request.args.get("i", "0") or "0")
+    if not prompts:
+        return redirect(url_for("dashboard"))
 
-    except ValueError:
-        idx = 0
-
-    idx = max(0, min(idx, len(prompts) - 1))
-
-    nxt = idx + 1
+    nxt = question_index(prompts) + 1
 
     if nxt >= len(prompts):
-
-        flash(
-            f"Skipped. Finished category '{category}'."
-        )
-
         return redirect(url_for("dashboard"))
 
     return redirect(
@@ -477,20 +655,15 @@ def interview_skip(category: str):
 # --------------------------------------------------
 
 @app.route("/guidance", methods=["GET", "POST"])
+@login_required
 def guidance():
 
-    subject = require_subject()
+    record = active_profile()
 
-    if not subject:
+    if record is None:
         return redirect(url_for("index"))
 
-    profile = load_or_create(subject)
-
-    consent = profile.get("consent", {})
-
-    has_key = bool(
-        os.getenv("XAI_API_KEY", "").strip()
-    )
+    profile = load_or_create(record)
 
     if request.method == "POST":
 
@@ -498,79 +671,107 @@ def guidance():
             request.form.get("question") or ""
         ).strip()
 
-        if not question:
-            flash("Ask a question.")
-            return redirect(url_for("guidance"))
+        if not question or len(question) > 4000:
 
-        if not has_key:
             flash(
-                "XAI_API_KEY is not set "
-                "in this terminal/session."
+                "Enter a question between "
+                "1 and 4,000 characters."
             )
 
             return redirect(url_for("guidance"))
 
-        if not consent.get("allow_remote_processing"):
+        if not remote_allowed(profile):
+
             flash(
-                "Remote processing consent "
-                "is required for guidance."
+                "Local and remote consent "
+                "are required for AI guidance."
             )
 
             return redirect(url_for("guidance"))
 
-        profile = update_core_summary(
-            profile,
-            force=False,
-        )
+        if not os.getenv("XAI_API_KEY", "").strip():
 
-        save_profile(subject, profile)
+            flash("XAI_API_KEY is not configured.")
 
-        generated = generate_guidance_response(
-            profile,
-            question,
-            k=3,
-        )
+            return redirect(url_for("guidance"))
 
-        profile.setdefault("entries", []).append(
-            generated
-        )
+        try:
 
-        save_profile(subject, profile)
+            profile = update_core_summary(
+                profile,
+                force=False,
+            )
 
-        return render_template(
-            "guidance.html",
-            subject=subject,
-            answer=generated["answer"],
-            question=question,
-        )
+            generated = generate_guidance_response(
+                profile,
+                question,
+                k=3,
+            )
+
+            profile.setdefault(
+                "entries",
+                [],
+            ).append(generated)
+
+            save_profile(record, profile)
+
+            return render_template(
+                "guidance.html",
+                subject=record["display_name"],
+                answer=generated["answer"],
+                question=question,
+            )
+
+        except Exception:
+
+            app.logger.warning(
+                "Guidance generation failed."
+            )
+
+            flash(
+                "Unable to generate guidance. "
+                "Please try again."
+            )
+
+            return redirect(url_for("guidance"))
 
     return render_template(
         "guidance.html",
-        subject=subject,
+        subject=record["display_name"],
         answer=None,
         question=None,
     )
 
 
 # --------------------------------------------------
-# Profile export
+# Private profile export
 # --------------------------------------------------
 
 @app.route("/export", methods=["POST"])
+@login_required
 def export():
 
-    subject = require_subject()
+    record = active_profile()
 
-    if not subject:
+    if record is None:
         return redirect(url_for("index"))
 
-    profile = load_or_create(subject)
+    profile = load_or_create(record)
 
-    out_path = write_summary_md(profile)
+    markdown = render_summary_md(profile)
 
-    flash(f"Exported summary -> {out_path}")
+    output = BytesIO(
+        markdown.encode("utf-8")
+    )
 
-    return redirect(url_for("dashboard"))
+    return send_file(
+        output,
+        mimetype="text/markdown",
+        as_attachment=True,
+        download_name=(
+            f"legacy_{record['id']}.md"
+        ),
+    )
 
 
 # --------------------------------------------------
@@ -578,106 +779,99 @@ def export():
 # --------------------------------------------------
 
 @app.route("/upload-summary", methods=["POST"])
+@login_required
 def upload_summary():
 
-    subject = require_subject()
+    record = active_profile()
 
-    if not subject:
+    if record is None:
         return redirect(url_for("index"))
 
-    profile = load_or_create(subject)
+    profile = load_or_create(record)
 
-    consent = profile.get("consent", {})
-
-    if not consent.get("has_consent"):
+    if not profile.get("consent", {}).get(
+        "has_consent"
+    ):
 
         flash(
-            "Consent required before uploading summaries."
+            "Consent is required before "
+            "uploading documents."
         )
 
         return redirect(url_for("dashboard"))
 
-    if (
-        "file" not in request.files
-        or not request.files["file"].filename
-    ):
+    file = request.files.get("file")
+
+    if file is None or not file.filename:
+
         flash("No file selected.")
+
         return redirect(url_for("dashboard"))
 
-    file = request.files["file"]
     path = None
 
     try:
 
-        path = save_upload(subject, file)
+        path = save_upload(
+            record["id"],
+            file,
+        )
 
         extracted_entries = extract_from_upload(
             profile,
             path,
         )
 
-        if extracted_entries:
+        if not extracted_entries:
 
-            profile.setdefault("entries", []).extend(
-                extracted_entries
+            flash(
+                "File was empty or could "
+                "not be processed."
             )
 
-            # Only process remotely with consent
-            if consent.get("allow_remote_processing"):
+            return redirect(url_for("dashboard"))
+
+        profile.setdefault(
+            "entries",
+            [],
+        ).extend(extracted_entries)
+
+        save_profile(record, profile)
+
+        if remote_allowed(profile):
+
+            try:
 
                 profile = update_core_summary(
                     profile,
                     force=True,
                 )
 
-            new_text = " ".join(
-                str(entry.get("answer", ""))
-                for entry in extracted_entries
-                if entry.get("answer")
-            )
+                save_profile(record, profile)
 
-            if new_text:
+            except Exception:
 
-                previous_answer = str(
-                    profile["identity_anchor"].get(
-                        "answer",
-                        "",
-                    )
+                flash(
+                    "Document saved, but the "
+                    "AI summary could not be refreshed."
                 )
 
-                profile["identity_anchor"]["answer"] = (
-                    previous_answer
-                    + "\n\nUpdated from recent upload: "
-                    + new_text[:500]
-                ).strip()
-
-            save_profile(subject, profile)
-
-            flash(
-                "Upload successful. "
-                f"{len(extracted_entries)} "
-                "entry/entries added."
-            )
-
-        else:
-
-            flash(
-                "File was empty or could not be processed."
-            )
+        flash(
+            f"Upload successful. "
+            f"{len(extracted_entries)} entries added."
+        )
 
     except ValueError as error:
 
-        flash(f"Upload error: {str(error)}")
+        flash(f"Upload error: {error}")
 
     except Exception:
 
-        app.logger.exception(
-            "Upload processing failed."
+        app.logger.warning(
+            "Document ingestion failed."
         )
 
-        flash(
-            "An error occurred during upload processing."
-        )
+        flash("Unable to process the document.")
 
     finally:
 
@@ -688,8 +882,23 @@ def upload_summary():
 
 
 # --------------------------------------------------
+# Health check
+# --------------------------------------------------
+
+@app.route("/health")
+def health():
+
+    return {"status": "ok"}, 200
+
+
+# --------------------------------------------------
 # Local development server
 # --------------------------------------------------
 
 if __name__ == "__main__":
-    app.run(debug=True)
+
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=False,
+    )

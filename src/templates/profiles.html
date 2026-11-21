@@ -1,0 +1,229 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Legacy | Knowledge Profiles</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        body {
+            margin: 0;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 24px 5%;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+        }
+
+        header h1 {
+            margin: 0;
+            letter-spacing: 3px;
+            color: white;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+
+        .account {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .profiles {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .profile-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 24px;
+            border-radius: 10px;
+            overflow-wrap: anywhere;
+        }
+
+        input {
+            padding: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: white;
+            margin: 12px 0;
+        }
+
+        button, .button {
+            display: inline-block;
+            padding: 12px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover, .button:hover {
+            background: #1d4ed8;
+        }
+
+        .logout {
+            background: #334155;
+        }
+
+        .muted {
+            color: #94a3b8;
+        }
+
+        .message {
+            padding: 12px;
+            background: #334155;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+
+        <div>
+            <h1>LEGACY</h1>
+            <p class="account">{{ current_user.email }}</p>
+        </div>
+
+        <form method="POST"
+              action="{{ url_for('auth.logout') }}">
+
+            <input type="hidden"
+                   name="_csrf_token"
+                   value="{{ csrf_token() }}">
+
+            <button class="logout" type="submit">
+                Sign out
+            </button>
+
+        </form>
+
+    </header>
+
+    <main>
+
+        <h2>Your Knowledge Workspace</h2>
+
+        <p class="muted">
+            Create and manage your private knowledge profiles.
+        </p>
+
+        {% with messages = get_flashed_messages() %}
+            {% for message in messages %}
+                <div class="message" role="status">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+        <section class="panel">
+
+            <h3>Create a Knowledge Profile</h3>
+
+            <form method="POST"
+                  action="{{ url_for('index') }}">
+
+                <input type="hidden"
+                       name="_csrf_token"
+                       value="{{ csrf_token() }}">
+
+                <label for="subject">
+                    Profile name
+                </label>
+
+                <input type="text"
+                       id="subject"
+                       name="subject"
+                       placeholder="Enter a person or organization name"
+                       maxlength="120"
+                       required>
+
+                <button type="submit">
+                    Create Profile
+                </button>
+
+            </form>
+
+        </section>
+
+        <h2>Your Profiles</h2>
+
+        <section class="profiles">
+
+            {% for profile in profiles %}
+
+                <article class="profile-card">
+
+                    <h3>{{ profile.display_name }}</h3>
+
+                    <p class="muted">
+                        Created {{ profile.created_utc[:10] }}
+                    </p>
+
+                    <form method="POST"
+                          action="{{ url_for('select_profile', profile_id=profile.id) }}">
+
+                        <input type="hidden"
+                               name="_csrf_token"
+                               value="{{ csrf_token() }}">
+
+                        <button type="submit">
+                            Open Profile
+                        </button>
+
+                    </form>
+
+                </article>
+
+            {% else %}
+
+                <p class="muted">
+                    You have not created any profiles yet.
+                </p>
+
+            {% endfor %}
+
+        </section>
+
+    </main>
+
+</body>
+</html>

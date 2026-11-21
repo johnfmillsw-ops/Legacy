@@ -145,6 +145,7 @@
         <h2 style="font-size:20px; margin:0 0 16px;">Ask a guidance question</h2>
 
         <form method="post">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
           <input name="question"
                  placeholder="e.g., How should I handle conflict with my son?"
                  required autofocus />

@@ -126,6 +126,7 @@
         <h3>{{ prompt_text }}</h3>
 
         <form method="post">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
           <textarea name="answer" placeholder="Your answer here..." required></textarea>
 
           <input type="text" name="tags" placeholder="Optional tags (comma-separated)" />
