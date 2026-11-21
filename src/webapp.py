@@ -689,9 +689,11 @@ def guidance():
             )
 
             generated = generate_guidance_response(
-                profile,
-                question,
+                profile=profile,
+                question=question,
                 k=3,
+                profile_id=record["id"],
+                owner_id=current_user.id,
             )
 
             profile.setdefault(
