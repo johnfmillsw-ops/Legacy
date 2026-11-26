@@ -132,11 +132,19 @@ def security_headers(response):
         "Referrer-Policy"
     ] = "no-referrer"
 
-    response.headers[
-        "Cache-Control"
-    ] = "no-store"
+
+    if request.endpoint == "static" and response.status_code in (200, 304):
+
+        response.headers["Cache-Control"] = (
+            "public, max-age=3600, must-revalidate"
+        )
+
+    else:
+
+        response.headers["Cache-Control"] = "no-store"
 
     return response
+
 
 
 # --------------------------------------------------
@@ -231,15 +239,13 @@ def active_profile():
     return record
 
 
+
 def load_or_create(record):
 
-    authorized = get_profile(
-        record["id"],
-        current_user.id,
-    )
-
-    if authorized is None:
+    if record is None or record["owner_id"] != current_user.id:
         abort(403)
+
+    authorized = record
 
     profile = authorized["profile_data"]
 
@@ -262,6 +268,7 @@ def load_or_create(record):
         abort(403)
 
     return profile
+
 
 
 def save_profile(record, profile):
