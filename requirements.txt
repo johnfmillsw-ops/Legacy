@@ -1,3 +1,6 @@
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 flask==3.0.3
 Flask-Login==0.6.3
 gunicorn==23.0.0
@@ -7,3 +10,8 @@ PyPDF2==3.0.1
 Werkzeug==3.0.6
 psycopg[binary]==3.2.9
 pgvector==0.3.6
+numpy==1.26.4
+torch==2.8.0+cpu
+transformers==4.48.3
+sentence-transformers==3.4.1
+faster-whisper==1.1.1

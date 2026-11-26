@@ -1,13 +1,23 @@
 
 from __future__ import annotations
 
+import os
+
 from pathlib import Path
 from functools import lru_cache
+from threading import Lock
 
 from faster_whisper import WhisperModel
 
 
 MODEL_NAME = "small"
+
+CPU_THREADS = max(
+    1,
+    int(os.getenv("WHISPER_CPU_THREADS", "1"))
+)
+
+TRANSCRIPTION_LOCK = Lock()
 
 
 # --------------------------------------------------
@@ -21,7 +31,8 @@ def get_transcription_model():
         MODEL_NAME,
         device="cpu",
         compute_type="int8",
-        cpu_threads=4,
+        cpu_threads=CPU_THREADS,
+        num_workers=1,
     )
 
 
@@ -30,6 +41,12 @@ def get_transcription_model():
 # --------------------------------------------------
 
 def transcribe_audio(audio_path):
+
+    with TRANSCRIPTION_LOCK:
+        return _transcribe_audio(audio_path)
+
+
+def _transcribe_audio(audio_path):
 
     path = Path(audio_path)
 

@@ -1,7 +1,10 @@
 
 from __future__ import annotations
 
+import os
+
 from functools import lru_cache
+from threading import Lock
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -9,6 +12,13 @@ from sentence_transformers import SentenceTransformer
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_DIMENSIONS = 384
+
+BATCH_SIZE = max(
+    1,
+    int(os.getenv("EMBEDDING_BATCH_SIZE", "8"))
+)
+
+EMBEDDING_LOCK = Lock()
 
 
 # Load the model once and reuse it.
@@ -84,15 +94,17 @@ def embed_texts(texts):
             "All embedding inputs must be nonempty text."
         )
 
-    model = get_model()
+    with EMBEDDING_LOCK:
 
-    vectors = model.encode(
-        texts,
-        batch_size=16,
-        normalize_embeddings=True,
-        convert_to_numpy=True,
-        show_progress_bar=False,
-    )
+        model = get_model()
+
+        vectors = model.encode(
+            texts,
+            batch_size=BATCH_SIZE,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+            show_progress_bar=False,
+        )
 
     vectors = np.asarray(
         vectors,
