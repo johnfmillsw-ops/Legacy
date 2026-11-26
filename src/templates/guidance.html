@@ -837,7 +837,59 @@
 
                             </div>
 
-                            <div class="guidance-answer-content">{{ answer }}</div>
+
+<div class="guidance-answer-content"
+     id="legacyAnswer">{{ answer }}</div>
+
+<div id="legacyPlayback"
+     style="margin-top:18px;"
+     hidden>
+
+    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+
+        <button type="button"
+                id="legacySpeak"
+                class="legacy-button"
+                style="color:var(--accent)!important;">
+
+            <svg width="18" height="18"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.7"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 aria-hidden="true">
+
+                <path d="M11 5 6 9H3v6h3l5 4z"/>
+                <path d="M15 9a4 4 0 0 1 0 6"/>
+                <path d="M18 5a10 10 0 0 1 0 14"/>
+
+            </svg>
+
+            <span id="legacySpeakLabel">Read aloud</span>
+
+        </button>
+
+        <button type="button"
+                id="legacyStop"
+                class="legacy-button"
+                disabled>
+
+            Stop
+
+        </button>
+
+    </div>
+
+    <div id="legacySpeechStatus"
+         role="status"
+         aria-live="polite"
+         style="font-size:12px; color:var(--text-muted); margin-top:8px;">
+    </div>
+
+</div>
+
 
                             <div class="guidance-answer-note">
 
@@ -1250,6 +1302,236 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 </script>
+
+<script>
+
+(function () {
+
+    const answer = document.getElementById("legacyAnswer");
+    const controls = document.getElementById("legacyPlayback");
+    const speakButton = document.getElementById("legacySpeak");
+    const speakLabel = document.getElementById("legacySpeakLabel");
+    const stopButton = document.getElementById("legacyStop");
+    const status = document.getElementById("legacySpeechStatus");
+
+    if (!answer || !controls) {
+        return;
+    }
+
+    if (
+        !("speechSynthesis" in window) ||
+        !("SpeechSynthesisUtterance" in window)
+    ) {
+        return;
+    }
+
+    const synth = window.speechSynthesis;
+
+    let utterance = null;
+    let state = "idle";
+    let generation = 0;
+    let chunks = [];
+    let chunkIndex = 0;
+
+    controls.hidden = false;
+
+    function updateControls(nextState, message = "") {
+
+        state = nextState;
+
+        speakLabel.textContent =
+            state === "playing" ? "Pause" :
+            state === "paused" ? "Resume" :
+            "Read aloud";
+
+        stopButton.disabled = state === "idle";
+
+        status.textContent = message;
+
+    }
+
+    function splitText(text) {
+
+        const words = text.trim().split(/\s+/);
+        const parts = [];
+
+        let part = "";
+
+        words.forEach(function (word) {
+
+            if (part && (part.length + word.length + 1) > 220) {
+                parts.push(part);
+                part = word;
+            } else {
+                part += (part ? " " : "") + word;
+            }
+
+        });
+
+        if (part) {
+            parts.push(part);
+        }
+
+        return parts;
+
+    }
+
+    function getLocalVoice() {
+
+        const voices = synth.getVoices().filter(function (voice) {
+            return voice.localService && /^en(?:-|$)/i.test(voice.lang);
+        });
+
+        return voices.find(function (voice) {
+            return voice.default;
+        }) || voices.find(function (voice) {
+            return voice.lang === "en-US";
+        }) || voices[0] || null;
+
+    }
+
+    function stopPlayback(message = "") {
+
+        generation++;
+
+        synth.cancel();
+
+        utterance = null;
+        chunks = [];
+        chunkIndex = 0;
+
+        updateControls("idle", message);
+
+    }
+
+    function playNext(token, voice) {
+
+        if (token !== generation) {
+            return;
+        }
+
+        if (chunkIndex >= chunks.length) {
+
+            utterance = null;
+
+            updateControls("idle", "Playback complete.");
+
+            return;
+
+        }
+
+        utterance = new SpeechSynthesisUtterance(
+            chunks[chunkIndex]
+        );
+
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+        utterance.rate = 0.95;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        utterance.onend = function () {
+
+            if (token !== generation) {
+                return;
+            }
+
+            chunkIndex++;
+
+            playNext(token, voice);
+
+        };
+
+        utterance.onerror = function () {
+
+            if (token !== generation) {
+                return;
+            }
+
+            stopPlayback("Voice playback unavailable. Please try again.");
+
+        };
+
+        synth.speak(utterance);
+
+    }
+
+    speakButton.addEventListener("click", function () {
+
+        if (state === "playing") {
+
+            synth.pause();
+
+            updateControls("paused", "Playback paused.");
+
+            return;
+
+        }
+
+        if (state === "paused") {
+
+            synth.resume();
+
+            updateControls("playing", "Reading aloud...");
+
+            return;
+
+        }
+
+        const voice = getLocalVoice();
+
+        if (!voice) {
+
+            updateControls(
+                "idle",
+                "No local English voice is available on this device."
+            );
+
+            return;
+
+        }
+
+        const text = answer.textContent.trim();
+
+        if (!text) {
+            return;
+        }
+
+        stopPlayback();
+
+        chunks = splitText(text);
+
+        chunkIndex = 0;
+
+        updateControls("playing", "Reading aloud...");
+
+        playNext(generation, voice);
+
+    });
+
+    stopButton.addEventListener("click", function () {
+
+        stopPlayback();
+
+    });
+
+    window.addEventListener("pagehide", function () {
+
+        stopPlayback();
+
+    });
+
+    document.getElementById("guidanceForm")
+        .addEventListener("submit", function () {
+
+            stopPlayback();
+
+        });
+
+})();
+
+</script>
+
 
 </body>
 </html>
