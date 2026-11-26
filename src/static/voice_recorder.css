@@ -1,11 +1,17 @@
 
 /* ==================================================
-   LEGACY — VOICE JOURNAL
+   LEGACY — RESPONSIVE VOICE JOURNAL
    ================================================== */
 
 .voice-journal {
-    margin-top: 24px;
-    color: #e2e8f0;
+    min-width: 0;
+    margin: 0;
+    padding: 20px;
+    color: var(--text-primary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    scroll-margin-top: 20px;
 }
 
 .voice-journal * {
@@ -16,136 +22,159 @@
     display: none !important;
 }
 
+/* Heading */
+
 .voice-heading {
-    margin-bottom: 24px;
+    margin-bottom: 18px;
 }
 
 .voice-heading h2 {
-    margin: 0 0 8px;
-    font-size: 22px;
-    font-weight: 600;
+    margin: 0 0 4px;
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 400;
 }
 
 .voice-heading p,
 .voice-hint {
-    color: #94a3b8;
-    font-size: 14px;
-    line-height: 1.6;
+    margin: 4px 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
 }
 
-
-/* ==================================================
-   INPUT FIELDS
-   ================================================== */
+/* Title input */
 
 .voice-field {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .voice-field label,
 .voice-upload label {
     display: block;
-    margin-bottom: 8px;
-    color: #cbd5e1;
-    font-size: 14px;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
     font-weight: 500;
 }
 
 .voice-field input,
 #voiceTranscriptEditor {
     width: 100%;
-    padding: 12px 14px;
-    background: #0f172a;
-    color: #e2e8f0;
-    border: 1px solid #334155;
-    border-radius: 8px;
+    min-width: 0;
+    padding: 10px 12px;
+    background: var(--background);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     font-family: inherit;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
+    font-size: 16px;
+    transition: border-color var(--transition);
 }
 
 .voice-field input:focus,
 #voiceTranscriptEditor:focus {
-    border-color: #60a5fa;
+    border-color: var(--accent);
 }
 
 .voice-field input::placeholder,
 #voiceTranscriptEditor::placeholder {
-    color: #64748b;
+    color: var(--text-muted);
 }
 
-
 /* ==================================================
-   RECORDING PANEL
+   COMPACT RECORDING PANEL
    ================================================== */
 
 .voice-recording-panel {
-    padding: 28px 20px;
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 12px;
-    text-align: center;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        "controls status timer"
+        "controls waveform waveform";
+    align-items: center;
+    column-gap: 16px;
+    row-gap: 6px;
+    padding: 14px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
 }
 
 #voiceStatus {
-    margin-bottom: 12px;
-    color: #94a3b8;
-    font-size: 14px;
+    grid-area: status;
+    min-width: 0;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+    overflow-wrap: anywhere;
 }
 
 #voiceTimer {
-    margin-bottom: 16px;
-    color: #f1f5f9;
-    font-size: 36px;
+    grid-area: timer;
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 20px;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 2px;
+    letter-spacing: 0.5px;
+    text-align: right;
 }
 
 #voiceWaveform {
+    grid-area: waveform;
     display: block;
     width: 100%;
-    height: 100px;
-    margin: 0 auto 20px;
-    background: #0b1220;
-    border-radius: 8px;
+    min-width: 0;
+    height: 36px;
+    margin: 0;
+    background: transparent;
+    border-radius: 4px;
 }
 
 .voice-controls {
+    grid-area: controls;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 12px;
-    margin: 20px 0;
+    gap: 8px;
+    margin: 0;
+}
+
+.voice-recording-panel > .voice-hint {
+    display: none;
 }
 
 .voice-record-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 68px;
-    height: 68px;
+    width: 52px;
+    height: 52px;
     padding: 0;
     color: #ffffff;
-    background: #dc2626;
-    border: 1px solid #ef4444;
+    background: #b94040;
+    border: 1px solid #c95353;
     border-radius: 50%;
     cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
+    flex-shrink: 0;
+    transition: background var(--transition);
+}
+
+.voice-record-button svg {
+    width: 22px;
+    height: 22px;
 }
 
 .voice-record-button:hover:not(:disabled) {
-    background: #ef4444;
-    transform: scale(1.05);
+    background: #d34c4c;
 }
 
 .voice-record-button:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
 }
-
 
 /* ==================================================
    BUTTONS
@@ -155,21 +184,21 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 16px;
-    background: #1e293b;
-    color: #e2e8f0;
-    border: 1px solid #475569;
-    border-radius: 7px;
+    min-height: 44px;
+    padding: 8px 14px;
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     font-family: inherit;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
+    transition: background var(--transition);
 }
 
 .voice-button:hover:not(:disabled) {
-    background: #334155;
-    border-color: #64748b;
+    background: #30343a;
 }
 
 .voice-button:disabled {
@@ -179,45 +208,52 @@
 
 .voice-button:focus-visible,
 .voice-record-button:focus-visible {
-    outline: 2px solid #60a5fa;
+    outline: 2px solid var(--accent);
     outline-offset: 3px;
 }
 
 .voice-primary {
-    background: #2563eb;
-    color: #ffffff;
-    border-color: #3b82f6;
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
 }
 
 .voice-primary:hover:not(:disabled) {
-    background: #1d4ed8;
-    border-color: #60a5fa;
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
 }
 
+#voiceStop {
+    color: #ffffff;
+    background: #a83b3b;
+    border-color: #b94b4b;
+}
 
 /* ==================================================
    RECORDING PREVIEW
    ================================================== */
 
 #voicePreview {
-    margin-top: 20px;
-    padding: 20px;
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 10px;
+    margin-top: 12px;
+    padding: 16px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
 }
 
 #voicePreview h3 {
-    margin: 0 0 16px;
-    font-size: 16px;
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 500;
 }
 
 #voicePlayback,
 #voiceReviewAudio {
     display: block;
     width: 100%;
-    margin: 12px 0 20px;
-    border-radius: 8px;
+    max-width: 100%;
+    margin: 10px 0 14px;
+    border-radius: var(--radius-sm);
     color-scheme: dark;
 }
 
@@ -226,145 +262,179 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 16px;
+    gap: 8px;
+    margin-top: 12px;
 }
 
-
 /* ==================================================
-   AUDIO FILE UPLOAD
+   AUDIO UPLOAD
    ================================================== */
 
 .voice-upload {
-    margin-top: 24px;
-    padding: 18px;
-    background: #0f172a;
-    border: 1px dashed #475569;
-    border-radius: 8px;
+    margin-top: 14px;
+    padding: 0;
+    background: transparent;
+    border: none;
 }
 
 .voice-upload input[type="file"] {
     width: 100%;
-    color: #94a3b8;
-    font-size: 13px;
+    min-width: 0;
+    color: var(--text-secondary);
+    font-size: 12px;
 }
 
 .voice-upload input[type="file"]::file-selector-button {
-    margin-right: 12px;
-    padding: 8px 12px;
-    background: #1e293b;
-    color: #e2e8f0;
-    border: 1px solid #475569;
-    border-radius: 6px;
+    min-height: 36px;
+    margin-right: 10px;
+    padding: 6px 12px;
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
     cursor: pointer;
 }
 
 #voiceMessage,
 #voiceHistoryMessage,
 #voiceReviewMessage {
-    margin-top: 12px;
-    color: #94a3b8;
+    margin-top: 8px;
+    color: var(--text-secondary);
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+#voiceMessage:empty,
+#voiceHistoryMessage:empty,
+#voiceReviewMessage:empty {
+    display: none;
 }
 
 #voiceHistoryMessage {
-    color: #f87171;
+    color: var(--danger);
 }
 
-
 /* ==================================================
-   JOURNAL HISTORY
+   COMPACT JOURNAL LIBRARY
    ================================================== */
 
 .voice-history {
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid #334155;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
 }
 
 .voice-history-heading {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.voice-history-heading > div {
+    min-width: 0;
 }
 
 .voice-history-heading h3 {
-    margin: 0 0 6px;
-    color: #f1f5f9;
-    font-size: 19px;
-    font-weight: 600;
+    margin: 0 0 3px;
+    color: var(--text-primary);
+    font-family: var(--font-heading);
+    font-size: 21px;
+    font-weight: 400;
 }
 
 .voice-history-heading p {
     margin: 0;
-    color: #94a3b8;
-    font-size: 13px;
-    line-height: 1.6;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#voiceRefreshHistory {
+    flex-shrink: 0;
+    background: transparent;
 }
 
 #voiceHistoryList {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    max-height: 460px;
+    gap: 0;
+    max-height: 340px;
     overflow-y: auto;
-    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    border-top: 1px solid var(--border);
 }
 
 .voice-history-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 16px;
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 9px;
-    transition: border-color 0.2s;
+    gap: 12px;
+    min-height: 64px;
+    padding: 10px 4px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    transition: background var(--transition);
 }
 
 .voice-history-item:hover {
-    border-color: #64748b;
+    background: var(--surface-raised);
+}
+
+.voice-history-item:last-child {
+    border-bottom: none;
 }
 
 .voice-history-item > div {
+    flex: 1;
     min-width: 0;
 }
 
 .voice-history-item h4 {
-    margin: 0 0 6px;
-    color: #e2e8f0;
-    font-size: 15px;
-    font-weight: 600;
-    overflow-wrap: anywhere;
+    margin: 0 0 3px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .voice-history-details {
-    margin: 0 0 8px;
-    color: #94a3b8;
-    font-size: 12px;
+    margin: 0 0 3px;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 .voice-history-item button {
     flex-shrink: 0;
+    min-height: 44px;
+    padding: 6px 12px;
+    background: transparent;
+    color: var(--accent);
+    border-color: var(--border);
+    font-size: 12px;
 }
 
-
 /* ==================================================
-   JOURNAL STATUS INDICATORS
+   STATUS INDICATORS
    ================================================== */
 
 .voice-history-status,
 .voice-review-status {
     display: inline-block;
-    padding: 4px 9px;
-    background: #1e293b;
-    color: #cbd5e1;
-    border: 1px solid #334155;
-    border-radius: 5px;
+    padding: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
     font-size: 11px;
     font-weight: 500;
 }
@@ -372,56 +442,49 @@
 .voice-journal [data-status="uploaded"],
 .voice-journal [data-status="transcribing"],
 .voice-journal [data-status="indexing"] {
-    color: #93c5fd;
-    background: rgba(59, 130, 246, 0.12);
-    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--accent);
 }
 
 .voice-journal [data-status="transcribed"] {
-    color: #fcd34d;
-    background: rgba(245, 158, 11, 0.12);
-    border-color: rgba(245, 158, 11, 0.3);
+    color: var(--warning);
 }
 
 .voice-journal [data-status="approved"],
 .voice-journal [data-status="indexed"] {
-    color: #86efac;
-    background: rgba(34, 197, 94, 0.12);
-    border-color: rgba(34, 197, 94, 0.3);
+    color: var(--success);
 }
 
 .voice-journal [data-status="failed"] {
-    color: #fca5a5;
-    background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--danger);
 }
 
-
 /* ==================================================
-   JOURNAL REVIEW PANEL
+   JOURNAL REVIEW
    ================================================== */
 
 .voice-journal-review {
-    margin-top: 24px;
-    padding: 24px;
-    background: #0f172a;
-    border: 1px solid #475569;
-    border-radius: 12px;
+    margin-top: 18px;
+    padding: 18px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
 }
 
 .voice-review-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 14px;
+    gap: 12px;
+    margin-bottom: 10px;
 }
 
 .voice-review-heading h3 {
+    min-width: 0;
     margin: 0;
-    color: #f1f5f9;
-    font-size: 19px;
-    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 400;
     overflow-wrap: anywhere;
 }
 
@@ -430,19 +493,19 @@
 }
 
 .voice-review-metadata {
-    margin: 12px 0 24px;
-    color: #94a3b8;
+    margin: 8px 0 16px;
+    color: var(--text-muted);
     font-size: 12px;
-    line-height: 1.6;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .voice-journal-review h4 {
-    margin: 20px 0 10px;
-    color: #cbd5e1;
-    font-size: 15px;
-    font-weight: 600;
+    margin: 16px 0 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
 }
-
 
 /* ==================================================
    TRANSCRIPT EDITOR
@@ -450,113 +513,164 @@
 
 #voiceTranscriptEditor {
     display: block;
-    min-height: 240px;
-    padding: 16px;
-    background: #0b1220;
-    font-size: 15px;
-    line-height: 1.8;
+    min-height: 220px;
+    padding: 14px;
+    background: var(--surface);
+    font-size: 16px;
+    line-height: 1.75;
     resize: vertical;
 }
 
 #voiceTranscriptEditor[readonly] {
-    background: #111827;
-    color: #94a3b8;
+    background: var(--surface);
+    color: var(--text-secondary);
 }
 
 .voice-original-transcript {
-    margin-top: 24px;
-    padding: 14px;
-    background: #111827;
-    border: 1px solid #334155;
-    border-radius: 8px;
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
 }
 
 .voice-original-transcript summary {
-    color: #94a3b8;
+    min-height: 32px;
+    color: var(--text-secondary);
     font-size: 13px;
     cursor: pointer;
 }
 
 .voice-original-transcript summary:hover {
-    color: #e2e8f0;
+    color: var(--text-primary);
 }
 
 #voiceOriginalTranscript {
-    max-height: 350px;
+    max-height: 300px;
     overflow-y: auto;
-    margin: 16px 0 0;
-    color: #cbd5e1;
+    margin: 10px 0 0;
+    color: var(--text-secondary);
     font-family: inherit;
     font-size: 14px;
-    line-height: 1.8;
+    line-height: 1.75;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
 
-
-/* ==================================================
-   CONSENT WARNING
-   ================================================== */
+/* Consent */
 
 .voice-consent-warning {
-    padding: 16px;
-    background: rgba(245, 158, 11, 0.08);
-    color: #fcd34d;
-    border: 1px solid rgba(245, 158, 11, 0.25);
-    border-radius: 8px;
+    padding: 14px;
+    background: var(--background);
+    color: var(--warning);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
-
 /* ==================================================
-   MOBILE RESPONSIVENESS
+   MOBILE
    ================================================== */
 
 @media (max-width: 600px) {
 
+    .voice-journal {
+        padding: 14px;
+    }
+
+    .voice-heading {
+        margin-bottom: 14px;
+    }
+
+    .voice-heading h2 {
+        font-size: 24px;
+    }
+
     .voice-recording-panel {
-        padding: 20px 12px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "status timer"
+            "waveform waveform"
+            "controls controls";
+        padding: 12px;
+        gap: 10px;
     }
 
     #voiceTimer {
-        font-size: 28px;
+        font-size: 19px;
     }
 
     #voiceWaveform {
-        height: 75px;
+        height: 40px;
     }
 
-    .voice-history-heading {
-        flex-wrap: wrap;
+    .voice-record-button {
+        width: 54px;
+        height: 54px;
+    }
+
+    .voice-history-heading h3 {
+        font-size: 19px;
+    }
+
+    .voice-history-heading p {
+        display: none;
+    }
+
+    #voiceHistoryList {
+        max-height: 320px;
     }
 
     .voice-history-item {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 0;
     }
 
     .voice-history-item button {
-        width: 100%;
+        width: auto;
+        padding: 8px 10px;
     }
 
     .voice-journal-review {
-        padding: 16px;
+        padding: 12px;
     }
 
-    .voice-transcript-actions,
-    .voice-actions {
-        flex-direction: column;
+    .voice-review-heading h3 {
+        font-size: 19px;
+    }
+
+    .voice-actions,
+    .voice-transcript-actions {
         align-items: stretch;
     }
 
-    .voice-transcript-actions button,
-    .voice-actions button {
-        width: 100%;
+    .voice-actions button,
+    .voice-transcript-actions button {
+        flex: 1 1 120px;
     }
 
     #voiceTranscriptEditor {
-        min-height: 200px;
+        min-height: 220px;
         font-size: 16px;
+    }
+}
+
+/* Desktop */
+
+@media (min-width: 1024px) {
+
+    .voice-journal {
+        padding: 24px;
+    }
+
+    .voice-recording-panel {
+        padding: 14px 18px;
+    }
+
+    .voice-history-item {
+        padding: 10px 8px;
     }
 }

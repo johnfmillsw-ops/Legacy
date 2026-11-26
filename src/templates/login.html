@@ -3,158 +3,574 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Legacy | Login</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <meta name="theme-color" content="#101215">
+
+    <title>Legacy — Sign in</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
 
     <style>
-        body {
-            margin: 0;
+
+        .auth-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
             min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        /* Brand presentation */
+
+        .auth-presentation {
+            position: relative;
+            display: none;
+            overflow: hidden;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 64px;
+            background:
+                radial-gradient(
+                    ellipse at 80% 20%,
+                    #40372b 0%,
+                    transparent 55%
+                ),
+                linear-gradient(
+                    145deg,
+                    #222321,
+                    #151719 70%
+                );
+            border-right: 1px solid var(--border);
+        }
+
+        .auth-presentation > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-artwork {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 85%;
+            max-width: 650px;
+            transform: translate(-50%, -50%);
+            color: var(--accent);
+            opacity: 0.18;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .auth-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-primary);
+        }
+
+        .auth-brand svg {
+            width: 32px;
+            height: 32px;
+            color: var(--accent);
+        }
+
+        .auth-brand-name {
+            font-family: var(--font-heading);
+            font-size: 32px;
+            font-weight: 400;
+            letter-spacing: 1.5px;
+        }
+
+        .auth-statement {
+            max-width: 560px;
+        }
+
+        .auth-statement h2 {
+            margin: 0;
+            font-family: var(--font-heading);
+            font-size: clamp(42px, 4.5vw, 68px);
+            font-weight: 400;
+            line-height: 1.12;
+            letter-spacing: -1px;
+        }
+
+        .auth-statement h2 span {
+            color: var(--accent);
+        }
+
+        .auth-statement p {
+            max-width: 440px;
+            margin: 24px 0 0;
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .auth-presentation-footer {
+            color: var(--text-muted);
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        /* Authentication workspace */
+
+        .auth-workspace {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            padding: 32px 24px;
+            padding-top: max(
+                32px,
+                env(safe-area-inset-top, 0px)
+            );
+            padding-bottom: max(
+                32px,
+                env(safe-area-inset-bottom, 0px)
+            );
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-mobile-brand {
+            margin-bottom: 48px;
+        }
+
+        .auth-header {
+            margin-bottom: 32px;
+        }
+
+        .auth-header h1 {
+            margin: 0;
+            font-family: var(--font-heading);
+            font-size: clamp(32px, 5vw, 40px);
+            font-weight: 400;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-header p {
+            margin: 10px 0 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Form */
+
+        .auth-form .legacy-field {
+            margin-bottom: 20px;
+        }
+
+        .auth-form label {
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .auth-form input {
+            min-height: 50px;
+            padding: 12px 14px;
+            background: var(--surface);
+            transition: border-color var(--transition);
+        }
+
+        .auth-form input:focus {
+            border-color: var(--accent);
+        }
+
+        .auth-form input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .auth-submit {
+            width: 100%;
+            min-height: 50px;
+            margin-top: 8px;
+            font-size: 15px;
+        }
+
+        .auth-register {
+            margin-top: 28px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .auth-register a {
+            font-weight: 500;
+        }
+
+        .auth-register a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-footer {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #0f172a;
-            color: #e2e8f0;
-            font-family: Arial, sans-serif;
+            gap: 7px;
+            margin-top: 48px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 12px;
         }
 
-        .auth-card {
-            width: 100%;
-            max-width: 400px;
-            padding: 40px;
-            margin: 20px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            box-sizing: border-box;
+        .auth-footer svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
         }
 
-        h1 {
-            margin: 0;
-            font-size: 36px;
-            letter-spacing: 3px;
-            color: white;
+        /* Desktop layout */
+
+        @media (min-width: 900px) {
+
+            .auth-layout {
+                grid-template-columns:
+                    minmax(0, 1.1fr)
+                    minmax(0, 1fr);
+            }
+
+            .auth-presentation {
+                display: flex;
+            }
+
+            .auth-mobile-brand {
+                display: none;
+            }
+
+            .auth-workspace {
+                padding: 48px;
+            }
+
         }
 
-        .subtitle {
-            color: #94a3b8;
-            margin-bottom: 30px;
+        @media (min-width: 1440px) {
+
+            .auth-presentation {
+                padding: 80px;
+            }
+
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
+        /* Small mobile screens */
+
+        @media (max-width: 380px) {
+
+            .auth-workspace {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+
+            .auth-mobile-brand {
+                margin-bottom: 32px;
+            }
+
+            .auth-footer {
+                margin-top: 32px;
+            }
+
         }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #475569;
-            border-radius: 6px;
-            background: #0f172a;
-            color: white;
-            box-sizing: border-box;
-        }
-
-        button {
-            width: 100%;
-            padding: 13px;
-            border: none;
-            border-radius: 6px;
-            background: #2563eb;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #1d4ed8;
-        }
-
-        a {
-            color: #60a5fa;
-            text-decoration: none;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 25px;
-            font-size: 14px;
-        }
-
-        .message {
-            padding: 12px;
-            margin-bottom: 20px;
-            background: #334155;
-            border-radius: 6px;
-            font-size: 14px;
-        }
     </style>
+
 </head>
 
-<body>
+<body class="legacy-app">
 
-    <main class="auth-card">
+{% macro brand() %}
 
-        <h1>LEGACY</h1>
+    <div class="auth-brand">
 
-        <p class="subtitle">
+        <svg viewBox="0 0 40 40"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.2"
+             aria-hidden="true">
+
+            <circle cx="20" cy="20" r="17"/>
+
+            <ellipse cx="20"
+                     cy="20"
+                     rx="9"
+                     ry="17"/>
+
+            <ellipse cx="20"
+                     cy="20"
+                     rx="17"
+                     ry="9"/>
+
+            <circle cx="20"
+                    cy="20"
+                    r="3"
+                    fill="currentColor"
+                    stroke="none"/>
+
+        </svg>
+
+        <span class="auth-brand-name">
+            Legacy
+        </span>
+
+    </div>
+
+{% endmacro %}
+
+
+<div class="auth-layout">
+
+    <!-- Desktop brand presentation -->
+
+    <aside class="auth-presentation">
+
+        {{ brand() }}
+
+        <!-- Abstract memory artwork -->
+
+        <svg class="auth-artwork"
+             viewBox="0 0 500 500"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="0.8"
+             aria-hidden="true">
+
+            <circle cx="250" cy="250" r="210"/>
+            <circle cx="250" cy="250" r="175"/>
+            <circle cx="250" cy="250" r="140"/>
+            <circle cx="250" cy="250" r="105"/>
+            <circle cx="250" cy="250" r="70"/>
+            <circle cx="250" cy="250" r="35"/>
+
+            <ellipse cx="250"
+                     cy="250"
+                     rx="100"
+                     ry="210"
+                     transform="rotate(45 250 250)"/>
+
+            <ellipse cx="250"
+                     cy="250"
+                     rx="100"
+                     ry="210"
+                     transform="rotate(-45 250 250)"/>
+
+            <ellipse cx="250"
+                     cy="250"
+                     rx="100"
+                     ry="210"/>
+
+            <ellipse cx="250"
+                     cy="250"
+                     rx="210"
+                     ry="100"/>
+
+            <circle cx="250" cy="40"
+                    r="4" fill="currentColor"/>
+
+            <circle cx="460" cy="250"
+                    r="4" fill="currentColor"/>
+
+            <circle cx="250" cy="460"
+                    r="4" fill="currentColor"/>
+
+            <circle cx="40" cy="250"
+                    r="4" fill="currentColor"/>
+
+            <circle cx="250" cy="250"
+                    r="5" fill="currentColor"/>
+
+        </svg>
+
+        <div class="auth-statement">
+
+            <div class="legacy-eyebrow">
+                Beyond a lifetime
+            </div>
+
+            <h2>
+                A life worth<br>
+                <span>remembering.</span>
+            </h2>
+
+            <p>
+                Preserve your memories, experiences,
+                values and perspectives. Create a
+                living archive of the person you are
+                and the life you have lived.
+            </p>
+
+        </div>
+
+        <div class="auth-presentation-footer">
             Knowledge preserved. Intelligence extended.
-        </p>
+        </div>
 
-        {% with messages = get_flashed_messages() %}
-            {% for message in messages %}
-                <div class="message" role="status">
-                    {{ message }}
+    </aside>
+
+
+    <!-- Authentication -->
+
+    <main class="auth-workspace">
+
+        <div class="auth-container">
+
+            <div class="auth-mobile-brand">
+                {{ brand() }}
+            </div>
+
+            <header class="auth-header">
+
+                <div class="legacy-eyebrow">
+                    Your personal archive
                 </div>
-            {% endfor %}
-        {% endwith %}
 
-        <form method="POST"
-              action="{{ url_for('auth.login') }}">
+                <h1>Welcome back.</h1>
 
-            <input type="hidden"
-                   name="_csrf_token"
-                   value="{{ csrf_token() }}">
+                <p>
+                    Sign in to continue building your legacy.
+                </p>
 
-            <label for="email">Email address</label>
+            </header>
 
-            <input type="email"
-                   id="email"
-                   name="email"
-                   autocomplete="username"
-                   maxlength="254"
-                   required>
 
-            <label for="password">Password</label>
+            <!-- Authentication messages -->
 
-            <input type="password"
-                   id="password"
-                   name="password"
-                   autocomplete="current-password"
-                   maxlength="128"
-                   required>
+            {% with messages = get_flashed_messages() %}
 
-            <button type="submit">
-                Sign in
-            </button>
+                {% if messages %}
 
-        </form>
+                    <div class="legacy-flash"
+                         role="status">
 
-        <div class="footer">
-            Don't have an account?
-            <a href="{{ url_for('auth.register') }}">
-                Create account
-            </a>
+                        {% for message in messages %}
+                            <div>{{ message }}</div>
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+            {% endwith %}
+
+
+            <!-- Login form -->
+
+            <form class="auth-form"
+                  method="POST"
+                  action="{{ url_for('auth.login') }}">
+
+                <input type="hidden"
+                       name="_csrf_token"
+                       value="{{ csrf_token() }}">
+
+                <div class="legacy-field">
+
+                    <label for="email">
+                        Email address
+                    </label>
+
+                    <input type="email"
+                           id="email"
+                           name="email"
+                           autocomplete="username"
+                           autocapitalize="none"
+                           spellcheck="false"
+                           maxlength="254"
+                           placeholder="you@example.com"
+                           required>
+
+                </div>
+
+                <div class="legacy-field">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           autocomplete="current-password"
+                           maxlength="128"
+                           placeholder="Enter your password"
+                           required>
+
+                </div>
+
+                <button type="submit"
+                        class="legacy-button legacy-button-primary auth-submit">
+
+                    Sign in
+
+                    <svg width="18"
+                         height="18"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         stroke-linecap="round"
+                         stroke-linejoin="round"
+                         aria-hidden="true">
+
+                        <path d="M5 12h14"/>
+                        <path d="m12 5 7 7-7 7"/>
+
+                    </svg>
+
+                </button>
+
+            </form>
+
+
+            <!-- Registration -->
+
+            <div class="auth-register">
+
+                New to Legacy?
+
+                <a href="{{ url_for('auth.register') }}">
+                    Create an account
+                </a>
+
+            </div>
+
+
+            <footer class="auth-footer">
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.6"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+
+                    <rect x="5"
+                          y="10"
+                          width="14"
+                          height="11"
+                          rx="2"/>
+
+                    <path d="M8 10V6a4 4 0 0 1 8 0v4"/>
+
+                </svg>
+
+                Your personal Legacy workspace
+
+            </footer>
+
         </div>
 
     </main>
+
+</div>
 
 </body>
 </html>

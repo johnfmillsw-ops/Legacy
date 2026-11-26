@@ -2,126 +2,582 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
 
-    <title>Legacy | Knowledge Profiles</title>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <meta name="theme-color" content="#101215">
+
+    <title>Legacy — Your Profiles</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
 
     <style>
-        body {
-            margin: 0;
-            background: #0f172a;
-            color: #e2e8f0;
-            font-family: Arial, sans-serif;
-        }
 
-        header {
+        /* Account header */
+
+        .profiles-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
             flex-wrap: wrap;
             gap: 16px;
-            padding: 24px 5%;
-            background: #1e293b;
-            border-bottom: 1px solid #334155;
+            padding: 18px 24px;
+            padding-top: max(
+                18px,
+                env(safe-area-inset-top, 0px)
+            );
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
         }
 
-        header h1 {
+        .profiles-account {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 0;
+        }
+
+        .profiles-email {
+            color: var(--text-secondary);
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        .profiles-account form {
+            flex-shrink: 0;
             margin: 0;
-            letter-spacing: 3px;
-            color: white;
         }
 
-        main {
-            max-width: 1000px;
-            margin: 50px auto;
-            padding: 0 20px;
+        .profiles-logout {
+            min-height: 40px;
+            padding: 8px 14px;
+            background: transparent;
+            font-size: 13px;
         }
 
-        .account {
-            color: #94a3b8;
-            font-size: 14px;
+        /* Main workspace */
+
+        .profiles-workspace {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 20px 48px;
         }
 
-        .panel {
-            background: #1e293b;
-            border: 1px solid #334155;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
+        /* Introduction */
+
+        .profiles-hero {
+            position: relative;
+            overflow: hidden;
+            padding: 36px 0;
+            margin-bottom: 28px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .profiles {
+        .profiles-hero h1 {
+            max-width: 720px;
+            font-family: var(--font-heading);
+            font-size: clamp(34px, 5vw, 52px);
+            font-weight: 400;
+            line-height: 1.15;
+            letter-spacing: -0.8px;
+        }
+
+        .profiles-hero h1 span {
+            color: var(--accent);
+        }
+
+        .profiles-hero p {
+            max-width: 580px;
+            margin: 16px 0 0;
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* Gallery header */
+
+        .profiles-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .profiles-section-header h2 {
+            font-family: var(--font-heading);
+            font-size: 27px;
+            font-weight: 400;
+        }
+
+        .profiles-count {
+            margin-top: 5px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .profiles-create-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Profile gallery */
+
+        .profiles-gallery {
             display: grid;
             grid-template-columns:
-                repeat(auto-fit, minmax(240px, 1fr));
+                repeat(auto-fill, minmax(260px, 1fr));
             gap: 20px;
         }
 
         .profile-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            padding: 24px;
-            border-radius: 10px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow: hidden;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            transition:
+                border-color var(--transition),
+                transform var(--transition);
+        }
+
+        .profile-card:hover {
+            border-color: #625544;
+            transform: translateY(-2px);
+        }
+
+        /* Decorative profile cover */
+
+        .profile-cover {
+            position: relative;
+            height: 112px;
+            overflow: hidden;
+            background:
+                radial-gradient(
+                    ellipse at 85% 10%,
+                    #554735,
+                    transparent 70%
+                ),
+                linear-gradient(
+                    135deg,
+                    #302b24,
+                    #191c20
+                );
+        }
+
+        .profile-cover svg {
+            position: absolute;
+            top: -40px;
+            right: -20px;
+            width: 220px;
+            height: 220px;
+            color: var(--accent);
+            opacity: 0.23;
+        }
+
+        /* Profile initials */
+
+        .profile-avatar {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 68px;
+            height: 68px;
+            margin-top: -34px;
+            margin-bottom: 16px;
+            border: 3px solid var(--surface);
+            border-radius: 50%;
+            background: #302b24;
+            color: var(--accent);
+            font-family: var(--font-heading);
+            font-size: 25px;
+            letter-spacing: 1px;
+            box-shadow: 0 0 0 1px #625544;
+        }
+
+        .profile-body {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 0 20px 20px;
+        }
+
+        .profile-name {
+            margin: 0;
+            color: var(--text-primary);
+            font-family: var(--font-heading);
+            font-size: 24px;
+            font-weight: 400;
             overflow-wrap: anywhere;
         }
 
-        input {
-            padding: 12px;
+        .profile-description {
+            margin: 6px 0 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .profile-created {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin: 16px 0 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .profile-created svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
+        .profile-open-form {
+            margin-top: auto;
+        }
+
+        .profile-open-button {
+            display: flex;
+            justify-content: space-between;
             width: 100%;
-            box-sizing: border-box;
-            background: #0f172a;
-            border: 1px solid #475569;
-            border-radius: 6px;
-            color: white;
-            margin: 12px 0;
+            min-height: 44px;
+            color: var(--accent) !important;
         }
 
-        button, .button {
-            display: inline-block;
-            padding: 12px 20px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            text-decoration: none;
+        .profile-open-button:hover {
+            background: #302b24;
+            border-color: #625544;
+        }
+
+        .profile-open-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Create another profile card */
+
+        .profile-new-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 290px;
+            padding: 24px;
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px dashed #514638;
+            border-radius: var(--radius-lg);
+            text-align: center;
             cursor: pointer;
+            transition: background var(--transition);
+        }
+
+        .profile-new-card:hover {
+            background: var(--surface);
+            border-color: var(--accent);
+        }
+
+        .profile-new-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 54px;
+            height: 54px;
+            margin-bottom: 18px;
+            background: #302b24;
+            color: var(--accent);
+            border-radius: 50%;
+        }
+
+        .profile-new-icon svg {
+            width: 25px;
+            height: 25px;
+        }
+
+        .profile-new-title {
+            font-family: var(--font-heading);
+            font-size: 23px;
+        }
+
+        .profile-new-description {
+            max-width: 220px;
+            margin-top: 8px;
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* Create profile dialog */
+
+        .profile-dialog {
+            width: calc(100% - 32px);
+            max-width: 460px;
+            max-height: calc(100dvh - 48px);
+            overflow-y: auto;
+            padding: 28px;
+            background: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+        }
+
+        .profile-dialog::backdrop {
+            background: rgba(0,0,0,0.72);
+            backdrop-filter: blur(5px);
+        }
+
+        .profile-dialog-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .profile-dialog-heading h2 {
+            font-family: var(--font-heading);
+            font-size: 28px;
+            font-weight: 400;
+        }
+
+        .profile-dialog-close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            flex-shrink: 0;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+        }
+
+        .profile-dialog-close svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .profile-dialog-description {
+            margin: 0 0 24px;
+            color: var(--text-secondary);
             font-size: 14px;
+            line-height: 1.7;
         }
 
-        button:hover, .button:hover {
-            background: #1d4ed8;
+        .profile-dialog label {
+            font-size: 13px;
+            font-weight: 500;
         }
 
-        .logout {
-            background: #334155;
+        .profile-dialog input {
+            min-height: 48px;
         }
 
-        .muted {
-            color: #94a3b8;
+        .profile-dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 24px;
         }
 
-        .message {
-            padding: 12px;
-            background: #334155;
-            border-radius: 6px;
-            margin-bottom: 20px;
+        /* Footer */
+
+        .profiles-footer {
+            margin-top: 48px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 12px;
+            text-align: center;
         }
+
+        /* Desktop */
+
+        @media (min-width: 900px) {
+
+            .profiles-header {
+                padding: 20px 40px;
+            }
+
+            .profiles-workspace {
+                padding: 40px;
+            }
+
+            .profiles-hero {
+                padding: 40px 0;
+            }
+
+            .profiles-gallery {
+                grid-template-columns:
+                    repeat(3, minmax(0, 1fr));
+            }
+
+        }
+
+        /* Mobile */
+
+        @media (max-width: 600px) {
+
+            .profiles-header {
+                padding: 14px 16px;
+            }
+
+            .profiles-header .legacy-brand-name {
+                font-size: 26px;
+            }
+
+            .profiles-account {
+                gap: 10px;
+            }
+
+            .profiles-email {
+                display: none;
+            }
+
+            .profiles-workspace {
+                padding: 20px 16px 32px;
+            }
+
+            .profiles-hero {
+                padding: 24px 0;
+                margin-bottom: 24px;
+            }
+
+            .profiles-hero h1 {
+                font-size: 36px;
+            }
+
+            .profiles-hero p {
+                font-size: 14px;
+            }
+
+            .profiles-section-header h2 {
+                font-size: 24px;
+            }
+
+            .profiles-create-button {
+                padding: 10px 12px;
+                font-size: 12px;
+            }
+
+            .profiles-gallery {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 16px;
+            }
+
+            .profile-cover {
+                height: 90px;
+            }
+
+            .profile-body {
+                padding: 0 18px 18px;
+            }
+
+            .profile-new-card {
+                min-height: 180px;
+            }
+
+            .profile-dialog {
+                padding: 20px;
+            }
+
+            .profile-dialog-actions button {
+                flex: 1;
+            }
+
+            .profiles-footer {
+                margin-top: 32px;
+            }
+
+        }
+
     </style>
+
 </head>
 
-<body>
+<body class="legacy-app">
 
-    <header>
+{% macro icon(name) %}
 
-        <div>
-            <h1>LEGACY</h1>
-            <p class="account">{{ current_user.email }}</p>
-        </div>
+<svg viewBox="0 0 24 24"
+     fill="none"
+     stroke="currentColor"
+     stroke-width="1.6"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     aria-hidden="true">
+
+    {% if name == "legacy" %}
+
+        <circle cx="12" cy="12" r="10"/>
+        <ellipse cx="12" cy="12" rx="5" ry="10"/>
+        <ellipse cx="12" cy="12" rx="10" ry="5"/>
+        <circle cx="12" cy="12" r="1.5"
+                fill="currentColor"
+                stroke="none"/>
+
+    {% elif name == "plus" %}
+
+        <path d="M12 5v14M5 12h14"/>
+
+    {% elif name == "arrow" %}
+
+        <path d="M5 12h14"/>
+        <path d="m12 5 7 7-7 7"/>
+
+    {% elif name == "calendar" %}
+
+        <rect x="3" y="5"
+              width="18" height="16" rx="2"/>
+        <path d="M7 3v4M17 3v4M3 10h18"/>
+
+    {% elif name == "close" %}
+
+        <path d="m6 6 12 12M18 6 6 18"/>
+
+    {% endif %}
+
+</svg>
+
+{% endmacro %}
+
+
+<!-- Account header -->
+
+<header class="profiles-header">
+
+    <div class="legacy-brand">
+
+        <span class="legacy-brand-mark">
+            {{ icon("legacy") }}
+        </span>
+
+        <span class="legacy-brand-name">
+            Legacy
+        </span>
+
+    </div>
+
+    <div class="profiles-account">
+
+        <span class="profiles-email">
+            {{ current_user.email }}
+        </span>
 
         <form method="POST"
               action="{{ url_for('auth.logout') }}">
@@ -130,100 +586,427 @@
                    name="_csrf_token"
                    value="{{ csrf_token() }}">
 
-            <button class="logout" type="submit">
+            <button type="submit"
+                    class="legacy-button profiles-logout">
+
                 Sign out
+
             </button>
 
         </form>
 
-    </header>
+    </div>
 
-    <main>
+</header>
 
-        <h2>Your Knowledge Workspace</h2>
 
-        <p class="muted">
-            Create and manage your private knowledge profiles.
+<main class="profiles-workspace">
+
+    <!-- Introduction -->
+
+    <section class="profiles-hero">
+
+        <div class="legacy-eyebrow">
+            Your personal archive
+        </div>
+
+        <h1>
+            Every life has
+            <span>a story.</span>
+        </h1>
+
+        <p>
+            Preserve the people, perspectives and
+            experiences that matter. Each profile
+            is a dedicated space for building
+            and exploring a legacy.
         </p>
 
-        {% with messages = get_flashed_messages() %}
-            {% for message in messages %}
-                <div class="message" role="status">
-                    {{ message }}
+    </section>
+
+
+    <!-- System messages -->
+
+    {% with messages = get_flashed_messages() %}
+
+        {% if messages %}
+
+            <div class="legacy-flash"
+                 role="status">
+
+                {% for message in messages %}
+
+                    <div>{{ message }}</div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- Profile gallery heading -->
+
+    <header class="profiles-section-header">
+
+        <div>
+
+            <h2>Your profiles</h2>
+
+            <div class="profiles-count">
+
+                {{ profiles|length }}
+
+                {% if profiles|length == 1 %}
+                    knowledge profile
+                {% else %}
+                    knowledge profiles
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <button type="button"
+                class="legacy-button legacy-button-primary profiles-create-button"
+                data-create-profile>
+
+            {{ icon("plus") }}
+
+            Create profile
+
+        </button>
+
+    </header>
+
+
+    <!-- Profile gallery -->
+
+    <section class="profiles-gallery"
+             aria-label="Your knowledge profiles">
+
+        {% for profile in profiles %}
+
+            <article class="profile-card">
+
+                <div class="profile-cover"
+                     aria-hidden="true">
+
+                    <svg viewBox="0 0 240 240"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="0.8">
+
+                        <circle cx="120" cy="120" r="100"/>
+                        <circle cx="120" cy="120" r="80"/>
+                        <circle cx="120" cy="120" r="60"/>
+                        <circle cx="120" cy="120" r="40"/>
+                        <circle cx="120" cy="120" r="20"/>
+
+                        <ellipse cx="120"
+                                 cy="120"
+                                 rx="45"
+                                 ry="100"
+                                 transform="rotate(45 120 120)"/>
+
+                        <ellipse cx="120"
+                                 cy="120"
+                                 rx="45"
+                                 ry="100"
+                                 transform="rotate(-45 120 120)"/>
+
+                        <ellipse cx="120"
+                                 cy="120"
+                                 rx="100"
+                                 ry="45"/>
+
+                    </svg>
+
                 </div>
-            {% endfor %}
-        {% endwith %}
 
-        <section class="panel">
 
-            <h3>Create a Knowledge Profile</h3>
+                <div class="profile-body">
 
-            <form method="POST"
-                  action="{{ url_for('index') }}">
+                    <div class="profile-avatar"
+                         aria-hidden="true">
 
-                <input type="hidden"
-                       name="_csrf_token"
-                       value="{{ csrf_token() }}">
+                        {% set words = profile.display_name.split() %}
 
-                <label for="subject">
-                    Profile name
-                </label>
+                        {% if words|length > 1 %}
 
-                <input type="text"
-                       id="subject"
-                       name="subject"
-                       placeholder="Enter a person or organization name"
-                       maxlength="120"
-                       required>
+                            {{ words[0][0]|upper }}{{ words[-1][0]|upper }}
 
-                <button type="submit">
-                    Create Profile
-                </button>
+                        {% elif words|length == 1 %}
 
-            </form>
+                            {{ words[0][:2]|upper }}
 
-        </section>
+                        {% else %}
 
-        <h2>Your Profiles</h2>
+                            L
 
-        <section class="profiles">
+                        {% endif %}
 
-            {% for profile in profiles %}
+                    </div>
 
-                <article class="profile-card">
+                    <h3 class="profile-name">
+                        {{ profile.display_name }}
+                    </h3>
 
-                    <h3>{{ profile.display_name }}</h3>
-
-                    <p class="muted">
-                        Created {{ profile.created_utc[:10] }}
+                    <p class="profile-description">
+                        Personal knowledge profile
                     </p>
 
-                    <form method="POST"
+                    <div class="profile-created">
+
+                        {{ icon("calendar") }}
+
+                        <span>
+                            Created {{ profile.created_utc[:10] }}
+                        </span>
+
+                    </div>
+
+
+                    <!-- Existing profile selection -->
+
+                    <form class="profile-open-form"
+                          method="POST"
                           action="{{ url_for('select_profile', profile_id=profile.id) }}">
 
                         <input type="hidden"
                                name="_csrf_token"
                                value="{{ csrf_token() }}">
 
-                        <button type="submit">
-                            Open Profile
+                        <button type="submit"
+                                class="legacy-button profile-open-button">
+
+                            Open profile
+
+                            {{ icon("arrow") }}
+
                         </button>
 
                     </form>
 
-                </article>
+                </div>
 
-            {% else %}
+            </article>
 
-                <p class="muted">
-                    You have not created any profiles yet.
-                </p>
+        {% endfor %}
 
-            {% endfor %}
 
-        </section>
+        <!-- Create another profile -->
 
-    </main>
+        <button type="button"
+                class="profile-new-card"
+                data-create-profile>
+
+            <span class="profile-new-icon">
+
+                {{ icon("plus") }}
+
+            </span>
+
+            <span class="profile-new-title">
+
+                {% if profiles|length == 0 %}
+                    Begin your legacy
+                {% else %}
+                    A new legacy
+                {% endif %}
+
+            </span>
+
+            <span class="profile-new-description">
+
+                {% if profiles|length == 0 %}
+
+                    Create your first profile and
+                    begin preserving a lifetime
+                    of knowledge.
+
+                {% else %}
+
+                    Create another dedicated
+                    knowledge profile.
+
+                {% endif %}
+
+            </span>
+
+        </button>
+
+    </section>
+
+
+    <footer class="profiles-footer">
+
+        Knowledge preserved. Intelligence extended.
+
+    </footer>
+
+</main>
+
+
+<!-- Create profile dialog -->
+
+<dialog id="createProfileDialog"
+        class="profile-dialog"
+        aria-labelledby="createProfileTitle">
+
+    <div class="profile-dialog-heading">
+
+        <h2 id="createProfileTitle">
+            Create a profile
+        </h2>
+
+        <button type="button"
+                class="profile-dialog-close"
+                data-close-profile
+                aria-label="Close">
+
+            {{ icon("close") }}
+
+        </button>
+
+    </div>
+
+    <p class="profile-dialog-description">
+
+        Begin a dedicated knowledge archive
+        for yourself, another person,
+        or an organization.
+
+    </p>
+
+
+    <!-- Existing profile creation form -->
+
+    <form method="POST"
+          action="{{ url_for('index') }}">
+
+        <input type="hidden"
+               name="_csrf_token"
+               value="{{ csrf_token() }}">
+
+        <div class="legacy-field">
+
+            <label for="subject">
+                Profile name
+            </label>
+
+            <input type="text"
+                   id="subject"
+                   name="subject"
+                   placeholder="Enter a name"
+                   maxlength="120"
+                   autocomplete="off"
+                   required>
+
+        </div>
+
+        <div class="profile-dialog-actions">
+
+            <button type="button"
+                    class="legacy-button"
+                    data-close-profile>
+
+                Cancel
+
+            </button>
+
+            <button type="submit"
+                    class="legacy-button legacy-button-primary">
+
+                Create profile
+
+            </button>
+
+        </div>
+
+    </form>
+
+</dialog>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const dialog = document.getElementById(
+        "createProfileDialog"
+    );
+
+    const subjectInput = document.getElementById(
+        "subject"
+    );
+
+
+    // Open the profile creation dialog.
+
+    document.querySelectorAll("[data-create-profile]")
+        .forEach(function (button) {
+
+            button.addEventListener("click", function () {
+
+                if (!dialog.open) {
+
+                    dialog.showModal();
+
+                    subjectInput.focus();
+
+                }
+
+            });
+
+        });
+
+
+    // Close the profile creation dialog.
+
+    document.querySelectorAll("[data-close-profile]")
+        .forEach(function (button) {
+
+            button.addEventListener("click", function () {
+
+                dialog.close();
+
+            });
+
+        });
+
+
+    // Close when clicking outside the dialog.
+
+    dialog.addEventListener("click", function (event) {
+
+        if (event.target !== dialog) {
+
+            return;
+
+        }
+
+        const bounds = dialog.getBoundingClientRect();
+
+        const outside =
+            event.clientX < bounds.left ||
+            event.clientX > bounds.right ||
+            event.clientY < bounds.top ||
+            event.clientY > bounds.bottom;
+
+        if (outside) {
+
+            dialog.close();
+
+        }
+
+    });
+
+});
+
+</script>
 
 </body>
 </html>
