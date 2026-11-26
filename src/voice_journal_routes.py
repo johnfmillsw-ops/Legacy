@@ -36,6 +36,7 @@ from voice_journal_db import (
 )
 
 from transcription import transcribe_audio
+from voice_indexing import index_voice_journal
 
 
 voice_journal_bp = Blueprint(
@@ -172,6 +173,30 @@ def process_voice_journal(
 
             app.logger.exception(
                 "Voice journal transcription failed: %s",
+                journal_id,
+            )
+
+
+# --------------------------------------------------
+# Background indexing
+# --------------------------------------------------
+
+def process_voice_indexing(app, journal_id, profile_id, owner_id):
+    with app.app_context():
+        try:
+            result = index_voice_journal(
+                journal_id=journal_id,
+                profile_id=profile_id,
+                owner_id=owner_id,
+            )
+            app.logger.info(
+                "Voice journal indexed: %s (document %s)",
+                journal_id,
+                result["document_id"],
+            )
+        except Exception:
+            app.logger.exception(
+                "Voice journal indexing failed: %s",
                 journal_id,
             )
 
@@ -531,8 +556,30 @@ def approve_transcript(journal_id):
             "error": "Unable to approve transcript."
         }), 500
 
+    indexing_started = False
+
+    try:
+        indexing_thread = Thread(
+            target=process_voice_indexing,
+            args=(
+                current_app._get_current_object(),
+                journal_id,
+                record["id"],
+                current_user.id,
+            ),
+            daemon=True,
+        )
+        indexing_thread.start()
+        indexing_started = True
+    except Exception:
+        current_app.logger.exception(
+            "Unable to start voice indexing: %s",
+            journal_id,
+        )
+
     return jsonify({
         "success": True,
+        "indexing_started": indexing_started,
         "journal": serialize_journal(
             journal,
             include_transcript=True,
