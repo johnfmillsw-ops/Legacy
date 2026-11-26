@@ -66,7 +66,7 @@ app.secret_key = (
 )
 
 app.config.update(
-    MAX_CONTENT_LENGTH=10 * 1024 * 1024,
+    MAX_CONTENT_LENGTH=101 * 1024 * 1024,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=(
@@ -82,6 +82,9 @@ initialize_auth(app)
 from memory_review import memory_review_bp
 
 app.register_blueprint(memory_review_bp)
+from voice_journal_routes import voice_journal_bp
+
+app.register_blueprint(voice_journal_bp)
 
 # --------------------------------------------------
 # Application-wide security

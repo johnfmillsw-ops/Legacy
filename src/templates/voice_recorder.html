@@ -1,0 +1,313 @@
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='voice_recorder.css') }}">
+
+<section class="card voice-journal" id="voiceJournal">
+
+    <div class="voice-heading">
+        <h2>Voice Journal</h2>
+        <p>Preserve your thoughts, experiences, and memories.</p>
+    </div>
+
+    {% if consent.has_consent %}
+
+    <div class="voice-field">
+        <label for="voiceTitle">Entry title (optional)</label>
+
+        <input
+            type="text"
+            id="voiceTitle"
+            maxlength="200"
+            placeholder="Give this memory a title..."
+        >
+    </div>
+
+    <!-- Voice recording panel -->
+
+    <div class="voice-recording-panel">
+
+        <div id="voiceStatus" role="status" aria-live="polite">
+            Ready to record
+        </div>
+
+        <div id="voiceTimer">00:00:00</div>
+
+        <canvas
+            id="voiceWaveform"
+            width="800"
+            height="100"
+        ></canvas>
+
+        <div class="voice-controls">
+
+            <button
+                type="button"
+                id="voiceRecord"
+                class="voice-record-button"
+                aria-label="Start recording"
+            >
+                <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <rect
+                        x="9"
+                        y="2"
+                        width="6"
+                        height="12"
+                        rx="3"
+                    ></rect>
+
+                    <path d="M5 10v2a7 7 0 0 0 14 0v-2"></path>
+                    <path d="M12 19v3"></path>
+                    <path d="M8 22h8"></path>
+                </svg>
+            </button>
+
+            <button
+                type="button"
+                id="voicePause"
+                class="voice-button"
+                hidden
+            >
+                Pause
+            </button>
+
+            <button
+                type="button"
+                id="voiceStop"
+                class="voice-button"
+                hidden
+            >
+                Stop
+            </button>
+
+        </div>
+
+        <p class="voice-hint">
+            Record a quick update or tell a longer story.
+        </p>
+
+    </div>
+
+    <!-- Recording preview -->
+
+    <div id="voicePreview" hidden>
+
+        <h3>Review your recording</h3>
+
+        <audio
+            id="voicePlayback"
+            controls
+            preload="metadata"
+        ></audio>
+
+        <div class="voice-actions">
+
+            <button
+                type="button"
+                id="voiceSave"
+                class="voice-button voice-primary"
+            >
+                Save to Legacy
+            </button>
+
+            <button
+                type="button"
+                id="voiceDiscard"
+                class="voice-button"
+            >
+                Discard
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Existing audio upload -->
+
+    <div class="voice-upload">
+
+        <label for="voiceFile">
+            Or select an existing audio recording
+        </label>
+
+        <input
+            type="file"
+            id="voiceFile"
+            accept="audio/*,.webm,.m4a,.mp3,.wav,.ogg,.mp4,.aac,.flac"
+        >
+
+    </div>
+
+    <div
+        id="voiceMessage"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+    <!-- Saved journal history -->
+
+    <section
+        class="voice-history"
+        id="voiceJournalHistory"
+    >
+
+        <div class="voice-history-heading">
+
+            <div>
+                <h3>Journal History</h3>
+
+                <p>
+                    Revisit your recordings and review
+                    the memories Legacy has transcribed.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                id="voiceRefreshHistory"
+                class="voice-button"
+            >
+                Refresh
+            </button>
+
+        </div>
+
+        <div
+            id="voiceHistoryMessage"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+        <div id="voiceHistoryList">
+
+            <p class="voice-hint">
+                Loading your journal entries...
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- Individual journal review -->
+
+    <section
+        id="voiceJournalReview"
+        class="voice-journal-review"
+        hidden
+    >
+
+        <div class="voice-review-heading">
+
+            <h3 id="voiceReviewTitle">
+                Review Journal
+            </h3>
+
+            <button
+                type="button"
+                id="voiceCloseReview"
+                class="voice-button"
+            >
+                Close
+            </button>
+
+        </div>
+
+        <div
+            id="voiceReviewStatus"
+            class="voice-review-status"
+            role="status"
+        ></div>
+
+        <div
+            id="voiceReviewMetadata"
+            class="voice-review-metadata"
+        ></div>
+
+        <h4>Original Recording</h4>
+
+        <audio
+            id="voiceReviewAudio"
+            controls
+            preload="none"
+        ></audio>
+
+        <div id="voiceTranscriptSection" hidden>
+
+            <h4>Transcript</h4>
+
+            <p class="voice-hint">
+                Review the transcript and correct any errors
+                before approving it for Legacy's knowledge system.
+            </p>
+
+            <textarea
+                id="voiceTranscriptEditor"
+                rows="12"
+                maxlength="250000"
+                placeholder="Your transcript will appear here..."
+            ></textarea>
+
+            <div class="voice-transcript-actions">
+
+                <button
+                    type="button"
+                    id="voiceSaveTranscript"
+                    class="voice-button"
+                >
+                    Save Changes
+                </button>
+
+                <button
+                    type="button"
+                    id="voiceApproveTranscript"
+                    class="voice-button voice-primary"
+                >
+                    Approve Transcript
+                </button>
+
+            </div>
+
+            <details class="voice-original-transcript">
+
+                <summary>
+                    View Original Transcription
+                </summary>
+
+                <pre id="voiceOriginalTranscript"></pre>
+
+            </details>
+
+        </div>
+
+        <div
+            id="voiceReviewMessage"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+    </section>
+
+    {% else %}
+
+    <div class="voice-consent-warning">
+        Recording consent must be enabled before using
+        the Voice Journal.
+    </div>
+
+    {% endif %}
+
+</section>
+
+<script
+    defer
+    src="{{ url_for('static', filename='voice_recorder.js') }}"
+></script>

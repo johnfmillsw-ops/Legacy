@@ -98,10 +98,10 @@
         border: 1px solid #475569;
         border-radius: 999px;
         text-decoration: none;
-        transition: all 0.15s;
       }
       a.pill:hover {
         background: #475569;
+        text-decoration: none;
       }
       .warning {
         background: #334155;
@@ -141,115 +141,244 @@
       }
     </style>
   </head>
+
   <body>
 
     <div class="container">
 
+      <!-- Header -->
       <div class="header">
         <div>
-          <h1 style="font-size:24px; font-weight:700;">Legacy</h1>
-          <div style="color:#94a3b8;">Subject: <b>{{ subject }}</b></div>
+          <h1 style="font-size:24px; font-weight:700;">
+            Legacy
+          </h1>
+
+          <div style="color:#94a3b8;">
+            Subject: <b>{{ subject }}</b>
+          </div>
         </div>
+
         <div style="display:flex; gap:16px; flex-wrap:wrap;">
-          <a href="{{ url_for('dashboard') }}">Dashboard</a>
-          <a href="{{ url_for('guidance') }}">Guidance</a>
-          <a href="{{ url_for('index') }}">Switch subject</a>
+          <a href="{{ url_for('dashboard') }}">
+            Dashboard
+          </a>
+
+          <a href="{{ url_for('guidance') }}">
+            Guidance
+          </a>
+
+          <a href="{{ url_for('index') }}">
+            Switch subject
+          </a>
         </div>
       </div>
 
+      <!-- Flash messages -->
       {% with messages = get_flashed_messages() %}
         {% if messages %}
           <div class="flash">
-            {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+            {% for m in messages %}
+              <div>{{ m }}</div>
+            {% endfor %}
           </div>
         {% endif %}
       {% endwith %}
 
-      <!-- Status -->
-      <div class="status-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap:20px;">
+      <!-- Profile status and consent -->
+      <div class="status-grid"
+           style="display:grid;
+                  grid-template-columns:repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+                  gap:20px;">
+
+        <!-- Profile status -->
         <div class="card">
-          <div style="font-weight:700; margin-bottom:10px; font-size:18px;">Profile status</div>
-          <div>Entries: <b>{{ entry_count }}</b></div>
-          <div>API key detected: <b>{{ "Yes" if has_key else "No" }}</b></div>
-          <div style="color:#94a3b8; margin-top:12px; font-size:14px;">
-            Tip: You’ll get better guidance after ~10–20 entries across values, stories, and guidance.
+
+          <div style="font-weight:700; margin-bottom:10px; font-size:18px;">
+            Profile status
           </div>
+
+          <div>
+            Entries: <b>{{ entry_count }}</b>
+          </div>
+
+          <div>
+            API key detected:
+            <b>{{ "Yes" if has_key else "No" }}</b>
+          </div>
+
+          <div style="color:#94a3b8; margin-top:12px; font-size:14px;">
+            Tip: You’ll get better guidance after ~10–20
+            entries across values, stories, and guidance.
+          </div>
+
         </div>
 
+        <!-- Consent -->
         <div class="card">
-          <div style="font-weight:700; margin-bottom:10px; font-size:18px;">Consent</div>
+
+          <div style="font-weight:700; margin-bottom:10px; font-size:18px;">
+            Consent
+          </div>
 
           {% if not consent.has_consent %}
+
             <div class="warning">
-              Consent is <b>required</b> before recording interview entries.
+              Consent is <b>required</b> before recording
+              interview entries.
             </div>
+
           {% endif %}
 
           {% if consent.has_consent and not consent.allow_remote_processing %}
+
             <div class="info">
-              Remote processing is <b>off</b>. Guidance will not call the model until enabled.
+              Remote processing is <b>off</b>.
+              Guidance will not call the model until enabled.
             </div>
+
           {% endif %}
 
-          <form method="post" action="{{ url_for('set_consent') }}">
-<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <form method="post"
+                action="{{ url_for('set_consent') }}">
+
+            <input type="hidden"
+                   name="_csrf_token"
+                   value="{{ csrf_token() }}">
+
             <label>
-              <input type="checkbox" name="has_consent" {% if consent.has_consent %}checked{% endif %}>
+              <input type="checkbox"
+                     name="has_consent"
+                     {% if consent.has_consent %}checked{% endif %}>
+
               I have explicit consent to record (local storage)
             </label>
 
             <label>
-              <input type="checkbox" name="allow_remote_processing" {% if consent.allow_remote_processing %}checked{% endif %}>
+              <input type="checkbox"
+                     name="allow_remote_processing"
+                     {% if consent.allow_remote_processing %}checked{% endif %}>
+
               Allow remote AI processing (OpenAI and xAI)
             </label>
 
-            <button type="submit" class="btn-primary" style="margin-top:12px;">Save Consent</button>
+            <button type="submit"
+                    class="btn-primary"
+                    style="margin-top:12px;">
+              Save Consent
+            </button>
+
           </form>
+
         </div>
+
       </div>
 
+      <!-- Update Core Summary -->
       <div class="card" style="margin-top:24px;">
-        <form method="post" action="{{ url_for('update_core_summary_route') }}">
-<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn-secondary">Update Core Summary</button>
+
+        <form method="post"
+              action="{{ url_for('update_core_summary_route') }}">
+
+          <input type="hidden"
+                 name="_csrf_token"
+                 value="{{ csrf_token() }}">
+
+          <button type="submit"
+                  class="btn-secondary">
+            Update Core Summary
+          </button>
+
         </form>
+
       </div>
 
       <!-- Interview categories -->
       <div class="card">
-        <div style="font-weight:700; margin-bottom:12px; font-size:18px;">Interview categories</div>
+
+        <div style="font-weight:700; margin-bottom:12px; font-size:18px;">
+          Interview categories
+        </div>
+
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
+
           {% for cat in categories %}
-            <a href="{{ url_for('interview', category=cat, i=0) }}" class="pill">
+
+            <a href="{{ url_for('interview', category=cat, i=0) }}"
+               class="pill">
               {{ cat }}
             </a>
+
           {% endfor %}
+
         </div>
+
         <div style="color:#94a3b8; margin-top:12px; font-size:14px;">
-          Recommendation: Fill <b>purpose</b> + <b>values</b> + <b>stories</b> first.
+          Recommendation: Fill <b>purpose</b> +
+          <b>values</b> + <b>stories</b> first.
         </div>
+
       </div>
+
+      <!-- Voice Journal -->
+      {% include "voice_recorder.html" %}
 
       <!-- Upload Self-Summary -->
       <div class="card">
-        <div style="font-weight:700; margin-bottom:12px; font-size:18px;">Upload Self-Summary</div>
-        <div style="color:#94a3b8; margin-bottom:12px; font-size:14px;">
-          Upload a .txt, .md, or .pdf summary (e.g., from Grok or ChatGPT) to bootstrap your profile with values, stories, etc.
+
+        <div style="font-weight:700; margin-bottom:12px; font-size:18px;">
+          Upload Self-Summary
         </div>
-        <form method="post" action="{{ url_for('upload_summary') }}" enctype="multipart/form-data">
-<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-          <input type="file" name="file" accept=".txt,.md,.pdf" required />
-          <button type="submit" class="btn-secondary" style="margin-top:12px;">Upload & Process</button>
+
+        <div style="color:#94a3b8; margin-bottom:12px; font-size:14px;">
+          Upload a .txt, .md, or .pdf summary
+          (e.g., from Grok or ChatGPT) to bootstrap your
+          profile with values, stories, etc.
+        </div>
+
+        <form method="post"
+              action="{{ url_for('upload_summary') }}"
+              enctype="multipart/form-data">
+
+          <input type="hidden"
+                 name="_csrf_token"
+                 value="{{ csrf_token() }}">
+
+          <input type="file"
+                 name="file"
+                 accept=".txt,.md,.pdf"
+                 required />
+
+          <button type="submit"
+                  class="btn-secondary"
+                  style="margin-top:12px;">
+            Upload &amp; Process
+          </button>
+
         </form>
+
       </div>
 
       <!-- Export -->
       <div class="card">
-        <div style="font-weight:700; margin-bottom:12px; font-size:18px;">Export</div>
-        <form method="post" action="{{ url_for('export') }}">
-<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn-secondary">Export summary markdown</button>
+
+        <div style="font-weight:700; margin-bottom:12px; font-size:18px;">
+          Export
+        </div>
+
+        <form method="post"
+              action="{{ url_for('export') }}">
+
+          <input type="hidden"
+                 name="_csrf_token"
+                 value="{{ csrf_token() }}">
+
+          <button type="submit"
+                  class="btn-secondary">
+            Export summary markdown
+          </button>
+
         </form>
+
       </div>
 
     </div>
