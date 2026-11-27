@@ -1,0 +1,1032 @@
+
+{% extends "base.html" %}
+{% set active_page = "journal" %}
+
+{% block title %}Legacy — Journal{% endblock %}
+
+{% block head %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='journal_editor.css', v='2') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='journal_designer.css') }}">
+<style>
+    .journal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .journal-library {
+        display: grid;
+        grid-template-columns: repeat(
+            auto-fill, minmax(170px, 1fr)
+        );
+        gap: 28px;
+        padding: 20px 0;
+    }
+
+    .journal-item {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .journal-cover {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 3 / 4;
+        width: 100%;
+        padding: 25px 20px 25px 30px;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 4px 12px 12px 4px;
+        background-color: #594536;
+        color: #c5ab85;
+        box-shadow:
+            5px 8px 18px rgba(0,0,0,.35),
+            inset 5px 0 12px rgba(0,0,0,.25);
+        cursor: pointer;
+        text-align: center;
+        transition: transform 180ms ease;
+        overflow: hidden;
+    }
+
+    .journal-cover:hover {
+        transform: translateY(-5px);
+    }
+
+    .journal-cover::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 12px;
+        width: 1px;
+        background: rgba(255,255,255,.16);
+    }
+
+    .journal-cover.leather {
+        background-image: repeating-linear-gradient(
+            115deg,
+            transparent 0,
+            rgba(0,0,0,.025) 2px,
+            transparent 4px
+        );
+    }
+
+    .journal-cover.linen {
+        background-image:
+            repeating-linear-gradient(
+                0deg,
+                transparent 0 2px,
+                rgba(255,255,255,.035) 2px 3px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                transparent 0 2px,
+                rgba(0,0,0,.05) 2px 3px
+            );
+    }
+
+    .journal-cover-title {
+        font-family: Georgia, serif;
+        font-size: clamp(18px, 2vw, 26px);
+        font-weight: normal;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+    }
+
+    .journal-cover-subtitle {
+        margin-top: 12px;
+        font-size: 12px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        opacity: .85;
+    }
+
+    .journal-cover-emblem {
+        font-size: 30px;
+        margin-bottom: 22px;
+    }
+
+    .journal-cover-rule {
+        width: 32px;
+        height: 1px;
+        background: currentColor;
+        margin: 18px 0;
+        opacity: .65;
+    }
+
+    .journal-cover.modern .journal-cover-title {
+        font-family: system-ui, sans-serif;
+    }
+
+    .journal-cover.elegant .journal-cover-title {
+        font-style: italic;
+    }
+
+    .journal-item-title {
+        font-size: 14px;
+        color: #e8e5df;
+        overflow-wrap: anywhere;
+    }
+
+    .journal-item-meta {
+        font-size: 12px;
+        color: #92969e;
+    }
+
+    .journal-empty {
+        text-align: center;
+        padding: 48px 24px;
+        border: 1px dashed #30343a;
+        border-radius: 12px;
+    }
+
+    .journal-empty h2 {
+        font-family: Georgia, serif;
+        font-weight: normal;
+        margin: 12px 0;
+    }
+
+    .journal-empty p {
+        color: #92969e;
+        line-height: 1.6;
+        margin-bottom: 24px;
+    }
+
+    .journal-dialog {
+        width: min(440px, calc(100% - 32px));
+        padding: 28px;
+        border: 1px solid #30343a;
+        border-radius: 14px;
+        background: #191c20;
+        color: #e8e5df;
+        box-sizing: border-box;
+    }
+
+    .journal-dialog::backdrop {
+        background: rgba(0,0,0,.65);
+    }
+
+    .journal-dialog h2 {
+        font-family: Georgia, serif;
+        font-weight: normal;
+        margin: 0 0 24px;
+    }
+
+    .journal-form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .journal-form-field label {
+        font-size: 13px;
+        color: #b0b3ba;
+    }
+
+    .journal-form-field input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px;
+        border: 1px solid #30343a;
+        border-radius: 8px;
+        background: #101215;
+        color: #e8e5df;
+        font: inherit;
+    }
+
+    .journal-dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 24px;
+    }
+
+    .journal-status {
+        font-size: 13px;
+        color: #dc7777;
+    }
+
+    .journal-detail {
+        padding: 24px;
+        border: 1px solid #30343a;
+        border-radius: 12px;
+        background: #191c20;
+    }
+
+    .journal-detail h2 {
+        font-family: Georgia, serif;
+        font-weight: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .journal-entry-row {
+        padding: 16px 0;
+        border-bottom: 1px solid #30343a;
+        overflow-wrap: anywhere;
+    }
+
+    .journal-voice-section {
+        margin-top: 28px;
+    }
+
+    [hidden] {
+        display: none !important;
+    }
+
+    @media (max-width: 600px) {
+        .journal-library {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .journal-cover {
+            padding: 18px 12px 18px 22px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .journal-cover {
+            transition: none;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<header class="legacy-page-header journal-header">
+    <div>
+        <div class="legacy-eyebrow">
+            Your Legacy
+        </div>
+
+        <h1 class="legacy-page-title">
+            Journal
+        </h1>
+
+        <p class="legacy-page-description">
+            Preserve your thoughts, experiences
+            and the moments that matter.
+        </p>
+    </div>
+
+    {% if consent.get("has_consent") %}
+    <button
+        type="button"
+        class="legacy-button legacy-button-primary"
+        id="createJournalButton"
+    >
+        + Create Journal
+    </button>
+    {% endif %}
+</header>
+
+
+<section id="journalLibrarySection">
+
+    <h2 class="legacy-card-title">
+        Your journals
+    </h2>
+
+    <p id="journalLoading" class="legacy-muted">
+        Loading your journals...
+    </p>
+
+    <p
+        id="journalStatus"
+        class="journal-status"
+        role="alert"
+        hidden
+    ></p>
+
+    <div id="journalEmpty" class="journal-empty" hidden>
+
+        {{ nav_icon("book") }}
+
+        <h2>Every life has a story.</h2>
+
+        <p>
+            Create your first journal and begin
+            preserving yours.
+        </p>
+
+        {% if consent.get("has_consent") %}
+        <button
+            type="button"
+            class="legacy-button legacy-button-primary"
+            id="emptyCreateJournalButton"
+        >
+            Create your first journal
+        </button>
+        {% else %}
+        <a
+            class="legacy-button"
+            href="{{ url_for('settings') }}"
+        >
+            Review your privacy settings
+        </a>
+        {% endif %}
+
+    </div>
+
+    <div
+        id="journalLibrary"
+        class="journal-library"
+        hidden
+    ></div>
+
+</section>
+
+
+<section
+    id="journalDetail"
+    class="journal-detail"
+    hidden
+>
+    <button
+        type="button"
+        class="legacy-button"
+        id="backToJournals"
+    >
+        Back to journals
+    </button>
+
+    <h2 id="openedJournalTitle"></h2>
+
+    {% if consent.get("has_consent") %}
+    <button
+        type="button"
+        class="legacy-button"
+        id="customizeJournalButton"
+    >
+        Customize design
+    </button>
+    {% endif %}
+
+    <p
+        id="openedJournalSubtitle"
+        class="legacy-muted"
+    ></p>
+
+    {% if consent.get("has_consent") %}
+    <div style="margin: 20px 0;">
+        <button
+            type="button"
+            class="legacy-button legacy-button-primary"
+            id="openJournalEditor"
+        >
+            Open journal and write
+        </button>
+    </div>
+    {% endif %}
+
+    <div id="openedJournalEntries"></div>
+
+</section>
+
+
+<dialog
+    id="createJournalDialog"
+    class="journal-dialog"
+>
+
+    <h2>Create a journal</h2>
+
+    <form id="createJournalForm">
+
+        <input
+            type="hidden"
+            name="_csrf_token"
+            value="{{ csrf_token() }}"
+        >
+
+        <div class="journal-form-field">
+            <label for="journalTitle">
+                Journal title
+            </label>
+
+            <input
+                id="journalTitle"
+                name="title"
+                placeholder="My Journal"
+                maxlength="200"
+                required
+            >
+        </div>
+
+        <div class="journal-form-field">
+            <label for="journalSubtitle">
+                Subtitle (optional)
+            </label>
+
+            <input
+                id="journalSubtitle"
+                name="subtitle"
+                placeholder="A collection of my thoughts"
+                maxlength="500"
+            >
+        </div>
+
+        <p
+            id="createJournalError"
+            class="journal-status"
+            role="alert"
+            hidden
+        ></p>
+
+        <div class="journal-dialog-actions">
+
+            <button
+                type="button"
+                class="legacy-button"
+                id="cancelCreateJournal"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="submit"
+                class="legacy-button legacy-button-primary"
+                id="submitJournal"
+            >
+                Create Journal
+            </button>
+
+        </div>
+
+    </form>
+
+</dialog>
+
+
+{% include "journal_designer.html" %}
+{% include "journal_editor.html" %}
+
+<section class="journal-voice-section">
+
+    <h2 class="legacy-card-title">
+        Voice journals
+    </h2>
+
+    {% include "voice_recorder.html" %}
+
+</section>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="{{ url_for('static', filename='journal_editor.js', v='3') }}"></script>
+
+<script src="{{ url_for('static', filename='journal_designer.js') }}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const apiUrl = "/api/journals";
+
+    const library = document.getElementById(
+        "journalLibrary"
+    );
+
+    const librarySection = document.getElementById(
+        "journalLibrarySection"
+    );
+
+    const empty = document.getElementById(
+        "journalEmpty"
+    );
+
+    const loading = document.getElementById(
+        "journalLoading"
+    );
+
+    const status = document.getElementById(
+        "journalStatus"
+    );
+
+    const detail = document.getElementById(
+        "journalDetail"
+    );
+
+    const dialog = document.getElementById(
+        "createJournalDialog"
+    );
+
+    const form = document.getElementById(
+        "createJournalForm"
+    );
+
+    const submit = document.getElementById(
+        "submitJournal"
+    );
+
+    const createError = document.getElementById(
+        "createJournalError"
+    );
+
+    let detailRequest = 0;
+    let activeJournal = null;
+
+    const emblems = {
+        compass: "✧",
+        tree: "♧",
+        stars: "✦",
+        none: ""
+    };
+
+
+    async function requestData(url, options = {}) {
+
+        const response = await fetch(url, {
+            credentials: "same-origin",
+            ...options
+        });
+
+        const type = response.headers.get(
+            "content-type"
+        ) || "";
+
+        if (!type.includes("application/json")) {
+            throw new Error(
+                "Unable to access journals. Please sign in again."
+            );
+        }
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(
+                data.error || "Journal request failed."
+            );
+        }
+
+        return data;
+    }
+
+
+    function showError(element, message) {
+
+        element.textContent = message;
+        element.hidden = false;
+    }
+
+
+    function createElement(tag, className, text) {
+
+        const element = document.createElement(tag);
+
+        if (className) {
+            element.className = className;
+        }
+
+        if (text !== undefined) {
+            element.textContent = text;
+        }
+
+        return element;
+    }
+
+
+    function renderJournal(journal) {
+
+        const design = journal.design || {};
+
+        const item = createElement(
+            "article",
+            "journal-item"
+        );
+
+        const cover = createElement(
+            "button",
+            "journal-cover"
+        );
+
+        cover.type = "button";
+
+        cover.setAttribute(
+            "aria-label",
+            "Open " + journal.title
+        );
+
+        if (
+            ["leather", "linen", "minimal"]
+                .includes(design.cover_style)
+        ) {
+            cover.classList.add(design.cover_style);
+        }
+
+        if (
+            ["classic", "modern", "elegant"]
+                .includes(design.typography)
+        ) {
+            cover.classList.add(design.typography);
+        }
+
+        if (
+            /^#[0-9a-f]{6}$/i.test(design.cover_color)
+        ) {
+            cover.style.backgroundColor =
+                design.cover_color;
+        }
+
+        if (
+            /^#[0-9a-f]{6}$/i.test(design.accent_color)
+        ) {
+            cover.style.color = design.accent_color;
+        }
+
+        const emblem = emblems[design.emblem];
+
+        if (typeof emblem === "string" && emblem) {
+
+            cover.appendChild(
+                createElement(
+                    "div",
+                    "journal-cover-emblem",
+                    emblem
+                )
+            );
+        }
+
+        cover.appendChild(
+            createElement(
+                "div",
+                "journal-cover-title",
+                journal.title
+            )
+        );
+
+        cover.appendChild(
+            createElement(
+                "div",
+                "journal-cover-rule"
+            )
+        );
+
+        if (journal.subtitle) {
+
+            cover.appendChild(
+                createElement(
+                    "div",
+                    "journal-cover-subtitle",
+                    journal.subtitle
+                )
+            );
+        }
+
+        cover.addEventListener("click", () => {
+            openJournal(journal.id);
+        });
+
+        item.appendChild(cover);
+
+        item.appendChild(
+            createElement(
+                "div",
+                "journal-item-title",
+                journal.title
+            )
+        );
+
+        const count = Number(journal.entry_count || 0);
+
+        item.appendChild(
+            createElement(
+                "div",
+                "journal-item-meta",
+                count + (count === 1 ? " entry" : " entries")
+            )
+        );
+
+        library.appendChild(item);
+    }
+
+
+    async function loadJournals() {
+
+        loading.hidden = false;
+        status.hidden = true;
+
+        try {
+
+            const data = await requestData(apiUrl);
+
+            library.replaceChildren();
+
+            empty.hidden = data.journals.length !== 0;
+            library.hidden = data.journals.length === 0;
+
+            data.journals.forEach(renderJournal);
+
+        } catch (error) {
+
+            showError(status, error.message);
+
+        } finally {
+
+            loading.hidden = true;
+        }
+    }
+
+
+    async function openJournal(journalId) {
+
+        const requestId = ++detailRequest;
+
+        status.hidden = true;
+
+        try {
+
+            const data = await requestData(
+                apiUrl + "/" + encodeURIComponent(journalId)
+            );
+
+            if (requestId !== detailRequest) {
+                return;
+            }
+
+            document.getElementById(
+                "openedJournalTitle"
+            ).textContent = data.journal.title;
+
+            document.getElementById(
+                "openedJournalSubtitle"
+            ).textContent = data.journal.subtitle || "";
+
+            const entries = document.getElementById(
+                "openedJournalEntries"
+            );
+
+            entries.replaceChildren();
+
+            if (!data.entries.length) {
+
+                entries.appendChild(
+                    createElement(
+                        "p",
+                        "legacy-muted",
+                        "Your journal is ready for its first entry."
+                    )
+                );
+
+            } else {
+
+                data.entries.forEach(entry => {
+
+                    const row = createElement(
+                        "div",
+                        "journal-entry-row"
+                    );
+
+                    row.appendChild(
+                        createElement(
+                            "strong",
+                            "",
+                            entry.title || "Untitled entry"
+                        )
+                    );
+
+                    row.appendChild(
+                        createElement(
+                            "p",
+                            "legacy-muted",
+                            entry.entry_date
+                        )
+                    );
+
+                    row.appendChild(
+                        createElement(
+                            "p",
+                            "",
+                            entry.preview || ""
+                        )
+                    );
+
+                    const openEntryButton = createElement(
+                        "button",
+                        "legacy-button",
+                        "Open entry"
+                    );
+
+                    openEntryButton.type = "button";
+
+                    openEntryButton.addEventListener(
+                        "click",
+                        () => {
+                            if (
+                                activeJournal &&
+                                window.LegacyJournalEditor
+                            ) {
+                                window.LegacyJournalEditor.open(
+                                    activeJournal,
+                                    entry.id
+                                );
+                            }
+                        }
+                    );
+
+                    if (document.getElementById("openJournalEditor")) {
+                        row.appendChild(openEntryButton);
+                    }
+
+                    entries.appendChild(row);
+                });
+            }
+
+            activeJournal = data.journal;
+
+            librarySection.hidden = true;
+            detail.hidden = false;
+
+        } catch (error) {
+
+            if (requestId === detailRequest) {
+                showError(status, error.message);
+            }
+        }
+    }
+
+
+    function showCreateDialog() {
+
+        form.reset();
+        createError.hidden = true;
+
+        dialog.showModal();
+
+        document.getElementById(
+            "journalTitle"
+        ).focus();
+    }
+
+
+    [
+        "createJournalButton",
+        "emptyCreateJournalButton"
+    ].forEach(id => {
+
+        const button = document.getElementById(id);
+
+        if (button) {
+            button.addEventListener(
+                "click",
+                showCreateDialog
+            );
+        }
+    });
+
+
+    document.getElementById(
+        "cancelCreateJournal"
+    ).addEventListener("click", () => {
+
+        if (!submit.disabled) {
+            dialog.close();
+        }
+    });
+
+
+    dialog.addEventListener("cancel", event => {
+
+        if (submit.disabled) {
+            event.preventDefault();
+        }
+    });
+
+
+    document.getElementById(
+        "backToJournals"
+    ).addEventListener("click", () => {
+
+        detailRequest++;
+
+        detail.hidden = true;
+        librarySection.hidden = false;
+
+        loadJournals();
+    });
+
+
+    form.addEventListener("submit", async event => {
+
+        event.preventDefault();
+
+        if (submit.disabled) {
+            return;
+        }
+
+        submit.disabled = true;
+        submit.textContent = "Creating...";
+        createError.hidden = true;
+
+        try {
+
+            await requestData(apiUrl, {
+                method: "POST",
+                body: new FormData(form)
+            });
+
+            dialog.close();
+
+            detailRequest++;
+            detail.hidden = true;
+            librarySection.hidden = false;
+
+            await loadJournals();
+
+        } catch (error) {
+
+            showError(createError, error.message);
+
+        } finally {
+
+            submit.disabled = false;
+            submit.textContent = "Create Journal";
+        }
+    });
+
+
+    const customizeButton = document.getElementById(
+        "customizeJournalButton"
+    );
+
+    if (customizeButton) {
+
+        customizeButton.addEventListener("click", () => {
+
+            if (activeJournal && window.LegacyJournalDesigner) {
+
+                window.LegacyJournalDesigner.open(
+                    activeJournal
+                );
+            }
+        });
+    }
+
+    document.addEventListener(
+        "legacy:journal-design-saved",
+        async event => {
+
+            if (
+                activeJournal &&
+                activeJournal.id === event.detail.id
+            ) {
+                activeJournal = event.detail;
+            }
+
+            await loadJournals();
+        }
+    );
+
+    const editorButton = document.getElementById(
+        "openJournalEditor"
+    );
+
+    if (editorButton) {
+
+        editorButton.addEventListener("click", () => {
+
+            if (
+                activeJournal &&
+                window.LegacyJournalEditor
+            ) {
+                window.LegacyJournalEditor.open(
+                    activeJournal
+                );
+            }
+        });
+    }
+
+    document.addEventListener(
+        "legacy:journal-entries-changed",
+        async event => {
+
+            if (
+                activeJournal &&
+                activeJournal.id === event.detail.journalId &&
+                !detail.hidden
+            ) {
+                await openJournal(activeJournal.id);
+            }
+
+            await loadJournals();
+        }
+    );
+
+    loadJournals();
+
+});
+</script>
+
+{% endblock %}

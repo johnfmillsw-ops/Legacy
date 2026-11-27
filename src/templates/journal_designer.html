@@ -1,0 +1,416 @@
+
+<dialog
+    id="journalDesigner"
+    class="designer-dialog"
+    data-api-url="/api/journals"
+>
+
+    <header class="designer-header">
+        <div>
+            <div class="legacy-eyebrow">
+                Make it yours
+            </div>
+
+            <h2>Journal Design Studio</h2>
+
+            <p>
+                Create a journal that reflects who you are.
+            </p>
+        </div>
+
+        <button
+            type="button"
+            id="designerClose"
+            class="designer-close"
+            aria-label="Close design studio"
+        >
+            &times;
+        </button>
+    </header>
+
+    <form id="journalDesignerForm">
+
+        <input
+            type="hidden"
+            name="_csrf_token"
+            value="{{ csrf_token() }}"
+        >
+
+        <div class="designer-workspace">
+
+            <section class="designer-preview">
+
+                <div class="designer-section-label">
+                    Live preview
+                </div>
+
+                <div class="designer-preview-stage">
+
+                    <div
+                        id="designerBook"
+                        class="designer-book leather classic"
+                    >
+                        <div id="designerEmblem"></div>
+
+                        <div id="designerBookTitle">
+                            My Journal
+                        </div>
+
+                        <div class="designer-book-rule"></div>
+
+                        <div id="designerBookSubtitle"></div>
+                    </div>
+
+                </div>
+
+                <div class="designer-section-label">
+                    Paper preview
+                </div>
+
+                <div
+                    id="designerPaper"
+                    class="designer-paper lined single"
+                >
+                    <div class="designer-page">
+                        <span class="designer-page-date">
+                            A moment in time
+                        </span>
+
+                        <p>
+                            Every day holds something
+                            worth remembering.
+                        </p>
+                    </div>
+
+                    <div class="designer-page second-page">
+                    </div>
+                </div>
+
+            </section>
+
+            <section class="designer-controls">
+
+                <fieldset>
+                    <legend>Cover material</legend>
+
+                    <div class="designer-options">
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="cover_style"
+                                value="leather"
+                                checked
+                            >
+                            <span>Leather</span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="cover_style"
+                                value="linen"
+                            >
+                            <span>Linen</span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="cover_style"
+                                value="minimal"
+                            >
+                            <span>Minimal</span>
+                        </label>
+
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Cover color</legend>
+
+                    <div class="designer-swatches">
+
+                        <button
+                            type="button"
+                            class="designer-swatch"
+                            data-color="#594536"
+                            style="--swatch: #594536"
+                            aria-label="Walnut brown"
+                        ></button>
+
+                        <button
+                            type="button"
+                            class="designer-swatch"
+                            data-color="#263b35"
+                            style="--swatch: #263b35"
+                            aria-label="Forest green"
+                        ></button>
+
+                        <button
+                            type="button"
+                            class="designer-swatch"
+                            data-color="#26364f"
+                            style="--swatch: #26364f"
+                            aria-label="Midnight blue"
+                        ></button>
+
+                        <button
+                            type="button"
+                            class="designer-swatch"
+                            data-color="#652f3b"
+                            style="--swatch: #652f3b"
+                            aria-label="Burgundy"
+                        ></button>
+
+                        <button
+                            type="button"
+                            class="designer-swatch"
+                            data-color="#222222"
+                            style="--swatch: #222222"
+                            aria-label="Charcoal"
+                        ></button>
+
+                        <button
+                            type="button"
+                            class="designer-swatch"
+                            data-color="#a8a58e"
+                            style="--swatch: #a8a58e"
+                            aria-label="Sage"
+                        ></button>
+
+                    </div>
+
+                    <div class="designer-color-field">
+                        <label for="designerCoverColor">
+                            Custom cover color
+                        </label>
+
+                        <input
+                            type="color"
+                            id="designerCoverColor"
+                            name="cover_color"
+                            value="#594536"
+                        >
+                    </div>
+
+                    <div class="designer-color-field">
+                        <label for="designerAccentColor">
+                            Lettering and accent color
+                        </label>
+
+                        <input
+                            type="color"
+                            id="designerAccentColor"
+                            name="accent_color"
+                            value="#c5ab85"
+                        >
+                    </div>
+
+                </fieldset>
+
+                <fieldset>
+                    <legend>Cover emblem</legend>
+
+                    <div class="designer-options">
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="emblem"
+                                value="none"
+                                checked
+                            >
+                            <span>None</span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="emblem"
+                                value="compass"
+                            >
+                            <span>Compass</span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="emblem"
+                                value="tree"
+                            >
+                            <span>Tree</span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="emblem"
+                                value="stars"
+                            >
+                            <span>Stars</span>
+                        </label>
+
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Typography</legend>
+
+                    <div class="designer-options">
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="typography"
+                                value="classic"
+                                checked
+                            >
+                            <span class="font-classic">
+                                Classic
+                            </span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="typography"
+                                value="modern"
+                            >
+                            <span class="font-modern">
+                                Modern
+                            </span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="typography"
+                                value="elegant"
+                            >
+                            <span class="font-elegant">
+                                Elegant
+                            </span>
+                        </label>
+
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Paper style</legend>
+
+                    <div class="designer-options">
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="paper_style"
+                                value="lined"
+                                checked
+                            >
+                            <span>Lined</span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="paper_style"
+                                value="blank"
+                            >
+                            <span>Blank</span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="paper_style"
+                                value="dotted"
+                            >
+                            <span>Dotted</span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="paper_style"
+                                value="dark"
+                            >
+                            <span>Dark</span>
+                        </label>
+
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Page layout</legend>
+
+                    <div class="designer-options">
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="page_layout"
+                                value="single"
+                                checked
+                            >
+                            <span>Single page</span>
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="page_layout"
+                                value="spread"
+                            >
+                            <span>Open book</span>
+                        </label>
+
+                    </div>
+                </fieldset>
+
+            </section>
+
+        </div>
+
+        <p
+            id="designerError"
+            class="designer-error"
+            role="alert"
+            hidden
+        ></p>
+
+        <footer class="designer-footer">
+
+            <button
+                type="button"
+                id="designerReset"
+                class="legacy-button"
+            >
+                Reset design
+            </button>
+
+            <div class="designer-footer-actions">
+
+                <button
+                    type="button"
+                    id="designerCancel"
+                    class="legacy-button"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    id="designerSave"
+                    class="legacy-button legacy-button-primary"
+                >
+                    Save design
+                </button>
+
+            </div>
+
+        </footer>
+
+    </form>
+
+</dialog>

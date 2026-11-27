@@ -197,6 +197,51 @@ def retrieve_approved_memories(
                 WHERE m.profile_id = %s
                   AND p.owner_id = %s
                   AND m.status = 'approved'
+
+                  -- Enforce written journal privacy.
+                  AND (
+                      COALESCE(
+                          d.metadata ->> 'origin',
+                          ''
+                      ) <> 'written_journal'
+
+                      OR EXISTS (
+                          SELECT 1
+                          FROM journal_entries e
+                          JOIN journals j
+                              ON j.id = e.journal_id
+
+                          WHERE e.document_id = d.id
+                            AND j.profile_id = m.profile_id
+
+                            AND e.id = (
+                                d.metadata
+                                ->> 'journal_entry_id'
+                            )
+
+                            AND j.id = (
+                                d.metadata
+                                ->> 'journal_id'
+                            )
+
+                            AND e.status = 'published'
+                            AND e.allow_ai_processing = TRUE
+
+                            AND (
+                                e.ai_preference = 'include'
+                                OR (
+                                    e.ai_preference = 'inherit'
+                                    AND j.ai_default_enabled = TRUE
+                                )
+                            )
+
+                            AND p.profile_data @>
+                                '{"consent":{
+                                    "has_consent":true,
+                                    "allow_remote_processing":true
+                                }}'::jsonb
+                      )
+                  )
                 ORDER BY m.updated_utc DESC, m.id
                 LIMIT 1000
                 """,

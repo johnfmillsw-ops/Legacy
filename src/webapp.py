@@ -91,6 +91,11 @@ from voice_journal_routes import voice_journal_bp
 
 app.register_blueprint(voice_journal_bp)
 
+from journal_routes import journal_bp
+
+app.register_blueprint(journal_bp)
+
+
 
 # --------------------------------------------------
 # Application-wide security
@@ -379,6 +384,83 @@ def select_profile(profile_id):
 # Dashboard
 # --------------------------------------------------
 
+@app.route("/journal")
+@login_required
+def journal():
+
+    record = active_profile()
+
+    if record is None:
+        return redirect(url_for("index"))
+
+    profile = load_or_create(record)
+
+    return render_template(
+        "journal.html",
+        subject=record["display_name"],
+        consent=profile.get("consent", {}),
+    )
+
+
+@app.route("/identity")
+@login_required
+def identity():
+
+    record = active_profile()
+
+    if record is None:
+        return redirect(url_for("index"))
+
+    profile = load_or_create(record)
+
+    return render_template(
+        "identity.html",
+        subject=record["display_name"],
+        categories=list(QUESTIONS.keys()),
+        consent=profile.get("consent", {}),
+        entry_count=len(profile.get("entries", [])),
+    )
+
+
+@app.route("/archive")
+@login_required
+def archive():
+
+    record = active_profile()
+
+    if record is None:
+        return redirect(url_for("index"))
+
+    return render_template(
+        "archive.html",
+        subject=record["display_name"],
+    )
+
+
+@app.route("/settings")
+@login_required
+def settings():
+
+    record = active_profile()
+
+    if record is None:
+        return redirect(url_for("index"))
+
+    profile = load_or_create(record)
+
+    return render_template(
+        "settings.html",
+        subject=record["display_name"],
+        consent=profile.get("consent", {}),
+        has_key=bool(
+            os.getenv("XAI_API_KEY", "").strip()
+        ),
+        entry_count=len(
+            profile.get("entries", [])
+        ),
+    )
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -453,7 +535,7 @@ def set_consent():
 
     flash("Consent settings saved.")
 
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("settings"))
 
 
 # --------------------------------------------------

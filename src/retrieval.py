@@ -128,6 +128,69 @@ def search_knowledge(
                             AND p.owner_id = %s
                       )
                       AND c.embedding IS NOT NULL
+
+                      -- Existing non-journal documents
+                      -- retain their current behavior.
+                      --
+                      -- Written journals must pass
+                      -- current privacy checks before
+                      -- entering semantic or text search.
+
+                      AND (
+                          COALESCE(
+                              d.metadata ->> 'origin',
+                              ''
+                          ) <> 'written_journal'
+
+                          OR EXISTS (
+                              SELECT 1
+                              FROM journal_entries e
+
+                              JOIN journals j
+                                  ON j.id = e.journal_id
+
+                              JOIN profiles jp
+                                  ON jp.id = j.profile_id
+
+                              WHERE e.document_id = d.id
+
+                                -- Verify document provenance.
+                                AND e.id = (
+                                    d.metadata
+                                    ->> 'journal_entry_id'
+                                )
+
+                                AND j.id = (
+                                    d.metadata
+                                    ->> 'journal_id'
+                                )
+
+                                AND j.profile_id = d.profile_id
+
+                                -- Only finalized entries.
+                                AND e.status = 'published'
+
+                                -- Effective permission.
+                                AND e.allow_ai_processing = TRUE
+
+                                -- Current privacy settings.
+                                AND (
+                                    e.ai_preference = 'include'
+
+                                    OR (
+                                        e.ai_preference = 'inherit'
+                                        AND j.ai_default_enabled = TRUE
+                                    )
+                                )
+
+                                -- Account-level consent.
+                                AND jp.profile_data @>
+                                    '{"consent":{
+                                        "has_consent":true,
+                                        "allow_remote_processing":true
+                                    }}'::jsonb
+                          )
+                      )
                 ),
 
                 semantic_results AS (

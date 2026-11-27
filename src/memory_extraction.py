@@ -297,6 +297,114 @@ def validate_memory(item, source_text):
     }
 
 
+
+# WRITTEN JOURNAL EXTRACTION
+
+def verify_extraction_source(
+    cursor,
+    profile_id,
+    owner_id,
+    document_id,
+    chunk,
+):
+    cursor.execute(
+        """
+        SELECT
+            d.metadata,
+            c.chunk_text
+        FROM knowledge_documents d
+        JOIN knowledge_chunks c
+            ON c.document_id = d.id
+        WHERE d.id = %s
+          AND d.profile_id = %s
+          AND c.id = %s
+        """,
+        (
+            document_id,
+            profile_id,
+            chunk["chunk_id"],
+        ),
+    )
+
+    source = cursor.fetchone()
+
+    if source is None:
+        raise PermissionError(
+            "Source is no longer available."
+        )
+
+    if source["chunk_text"] != chunk["chunk_text"]:
+        raise PermissionError(
+            "Source has changed."
+        )
+
+    metadata = source["metadata"] or {}
+
+    if metadata.get("origin") == "written_journal":
+
+        from journal_privacy import (
+            load_entry_privacy,
+            entry_is_eligible,
+        )
+
+        entry = load_entry_privacy(
+            cursor,
+            metadata["journal_entry_id"],
+            profile_id,
+            owner_id,
+            lock=True,
+        )
+
+        if not (
+            entry_is_eligible(entry)
+            and entry["allow_ai_processing"]
+            and entry["document_id"] == document_id
+        ):
+            raise PermissionError(
+                "Journal AI access revoked."
+            )
+
+
+def extract_written_journal_memories(
+    profile_id,
+    owner_id,
+    document_id,
+):
+    """
+    Process the complete authorized journal
+    document using existing Grok extraction.
+    """
+
+    with database_connection() as connection:
+        with connection.cursor() as cursor:
+
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS total
+                FROM knowledge_chunks c
+                JOIN knowledge_documents d
+                    ON d.id = c.document_id
+                WHERE d.id = %s
+                  AND d.profile_id = %s
+                  AND d.metadata ->> 'origin'
+                      = 'written_journal'
+                """,
+                (document_id, profile_id),
+            )
+
+            count = cursor.fetchone()["total"]
+
+    if not count:
+        return None
+
+    return extract_document_memories(
+        profile_id,
+        owner_id,
+        document_id,
+        max_chunks=count,
+    )
+
+
 def save_proposals(
     profile_id,
     owner_id,
@@ -340,6 +448,14 @@ def save_proposals(
                     "Remote processing consent revoked."
                 )
 
+            verify_extraction_source(
+                cursor,
+                profile_id,
+                owner_id,
+                document_id,
+                chunk,
+            )
+
             cursor.execute(
                 """
                 SELECT memory_text
@@ -378,11 +494,12 @@ def save_proposals(
                         source_excerpt,
                         interpretation_type,
                         status,
-                        event_date
+                        event_date,
+                        reviewed_utc
                     )
                     VALUES (
                         %s, %s, %s, %s, %s,
-                        %s, %s, %s, 'approved', %s
+                        %s, %s, %s, 'approved', %s, NOW()
                     )
                     """,
                     (
@@ -454,6 +571,27 @@ def extract_document_memories(
             )
         )
 
+        verify_access(profile_id, owner_id)
+
+        with database_connection() as connection:
+            with connection.cursor() as cursor:
+
+                from journal_privacy import lock_profile
+
+                lock_profile(
+                    cursor,
+                    profile_id,
+                    owner_id,
+                )
+
+                verify_extraction_source(
+                    cursor,
+                    profile_id,
+                    owner_id,
+                    document_id,
+                    chunk,
+                )
+
         raw_memories = extract_from_chunk(
             chunk,
             subject,
@@ -486,7 +624,7 @@ def extract_document_memories(
         total_inserted += inserted
 
         print(
-            "  {} pending memories saved.".format(
+            "  {} active memories saved.".format(
                 inserted
             )
         )

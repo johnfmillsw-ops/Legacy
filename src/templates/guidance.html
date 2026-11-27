@@ -1,21 +1,10 @@
+{% extends "base.html" %}
+{% set active_page = "guidance" %}
 
-<!doctype html>
-<html lang="en">
-<head>
+{% block title %}Legacy — Guidance{% endblock %}
 
-    <meta charset="utf-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover">
-
-    <meta name="theme-color" content="#101215">
-
-    <title>Legacy — Guidance</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
-
-    <style>
+{% block head %}
+<style>
 
         .guidance-workspace {
             display: flex;
@@ -539,12 +528,11 @@
         }
 
     </style>
+{% endblock %}
 
-</head>
+{% block content %}
 
-<body class="legacy-app">
-
-{% macro nav_icon(name) %}
+{% macro guidance_icon(name) %}
 
 <svg width="22"
      height="22"
@@ -633,133 +621,7 @@
 
 {% endmacro %}
 
-
-<div class="legacy-shell">
-
-    <aside class="legacy-sidebar">
-
-        <a href="{{ url_for('dashboard') }}"
-           class="legacy-brand">
-
-            <span class="legacy-brand-name">
-                Legacy
-            </span>
-
-        </a>
-
-        <nav class="legacy-nav"
-             aria-label="Desktop navigation">
-
-            <div class="legacy-nav-label">
-                Your workspace
-            </div>
-
-            <a href="{{ url_for('dashboard') }}"
-               class="legacy-nav-link">
-
-                {{ nav_icon("home") }}
-                Overview
-
-            </a>
-
-            <a href="{{ url_for('dashboard') }}#reflections"
-               class="legacy-nav-link">
-
-                {{ nav_icon("book") }}
-                Reflections
-
-            </a>
-
-            <a href="{{ url_for('dashboard') }}#voiceJournal"
-               class="legacy-nav-link">
-
-                {{ nav_icon("mic") }}
-                Voice journal
-
-            </a>
-
-            <a href="{{ url_for('dashboard') }}#archive"
-               class="legacy-nav-link">
-
-                {{ nav_icon("archive") }}
-                Archive
-
-            </a>
-
-            <a href="{{ url_for('guidance') }}"
-               class="legacy-nav-link active"
-               aria-current="page">
-
-                {{ nav_icon("chat") }}
-                Guidance
-
-            </a>
-
-            <div class="legacy-nav-label">
-                Account
-            </div>
-
-            <a href="{{ url_for('index') }}"
-               class="legacy-nav-link">
-
-                {{ nav_icon("user") }}
-                Profiles
-
-            </a>
-
-            <a href="{{ url_for('dashboard') }}#preferences"
-               class="legacy-nav-link">
-
-                {{ nav_icon("settings") }}
-                Settings
-
-            </a>
-
-        </nav>
-
-        <div class="legacy-sidebar-footer">
-
-            <div class="legacy-muted">
-                {{ subject }}
-            </div>
-
-            <div class="legacy-muted"
-                 style="font-size:12px; margin-top:8px;">
-
-                Your personal archive
-
-            </div>
-
-        </div>
-
-    </aside>
-
-
-    <header class="legacy-mobile-header">
-
-        <a href="{{ url_for('dashboard') }}"
-           class="legacy-brand">
-
-            <span class="legacy-brand-name">
-                Legacy
-            </span>
-
-        </a>
-
-        <a href="{{ url_for('dashboard') }}"
-           class="legacy-button"
-           aria-label="Back to dashboard">
-
-            {{ nav_icon("back") }}
-
-        </a>
-
-    </header>
-
-
-    <main class="legacy-main">
-
-        <div class="guidance-workspace">
+<div class="guidance-workspace">
 
             <header class="guidance-header">
 
@@ -788,23 +650,7 @@
             </header>
 
 
-            {% with messages = get_flashed_messages() %}
 
-                {% if messages %}
-
-                    <div class="legacy-flash"
-                         role="status"
-                         style="margin-top:16px;">
-
-                        {% for message in messages %}
-                            <div>{{ message }}</div>
-                        {% endfor %}
-
-                    </div>
-
-                {% endif %}
-
-            {% endwith %}
 
 
             <section class="guidance-conversation"
@@ -827,7 +673,7 @@
 
                         <div class="guidance-answer-avatar">
 
-                            {{ nav_icon("legacy") }}
+                            {{ guidance_icon("legacy") }}
 
                         </div>
 
@@ -858,7 +704,7 @@
                                             aria-describedby="legacyVoiceDisclosure"
                                             style="color:var(--accent)!important;">
 
-                                        {{ nav_icon("speaker") }}
+                                        {{ guidance_icon("speaker") }}
 
                                         <span id="legacySpeakLabel">
                                             Read aloud
@@ -913,7 +759,7 @@
 
                         <div class="guidance-symbol">
 
-                            {{ nav_icon("legacy") }}
+                            {{ guidance_icon("legacy") }}
 
                         </div>
 
@@ -943,7 +789,7 @@
                                     class="guidance-suggestion"
                                     data-question="What experiences have shaped your perspective on life?">
 
-                                {{ nav_icon("book") }}
+                                {{ guidance_icon("book") }}
 
                                 <span class="suggestion-title">
                                     Life experiences
@@ -960,7 +806,7 @@
                                     class="guidance-suggestion"
                                     data-question="What values and principles are most important to you?">
 
-                                {{ nav_icon("compass") }}
+                                {{ guidance_icon("compass") }}
 
                                 <span class="suggestion-title">
                                     Values and beliefs
@@ -977,7 +823,7 @@
                                     class="guidance-suggestion"
                                     data-question="What have your experiences taught you about love and relationships?">
 
-                                {{ nav_icon("heart") }}
+                                {{ guidance_icon("heart") }}
 
                                 <span class="suggestion-title">
                                     Relationships
@@ -994,7 +840,7 @@
                                     class="guidance-suggestion"
                                     data-question="What advice would you give someone facing a difficult decision in life?">
 
-                                {{ nav_icon("chat") }}
+                                {{ guidance_icon("chat") }}
 
                                 <span class="suggestion-title">
                                     Personal guidance
@@ -1062,7 +908,7 @@
                                 class="guidance-send"
                                 aria-label="Send question">
 
-                            {{ nav_icon("send") }}
+                            {{ guidance_icon("send") }}
 
                         </button>
 
@@ -1075,7 +921,7 @@
                     Guidance requires remote AI processing
                     to be enabled in
 
-                    <a href="{{ url_for('dashboard') }}#preferences">
+                    <a href="{{ url_for('settings') }}">
                         privacy settings.
                     </a>
 
@@ -1085,66 +931,9 @@
 
         </div>
 
-    </main>
+{% endblock %}
 
-
-    <nav class="legacy-mobile-nav"
-         aria-label="Mobile navigation">
-
-        <a href="{{ url_for('dashboard') }}"
-           class="legacy-mobile-link">
-
-            {{ nav_icon("home") }}
-
-            <span>Home</span>
-
-        </a>
-
-        <a href="{{ url_for('dashboard') }}#reflections"
-           class="legacy-mobile-link">
-
-            {{ nav_icon("book") }}
-
-            <span>Reflect</span>
-
-        </a>
-
-        <a href="{{ url_for('dashboard') }}#voiceJournal"
-           class="legacy-mobile-link">
-
-            <span class="legacy-record-action">
-
-                {{ nav_icon("mic") }}
-
-            </span>
-
-            <span>Record</span>
-
-        </a>
-
-        <a href="{{ url_for('guidance') }}"
-           class="legacy-mobile-link active"
-           aria-current="page">
-
-            {{ nav_icon("chat") }}
-
-            <span>Guidance</span>
-
-        </a>
-
-        <a href="{{ url_for('index') }}"
-           class="legacy-mobile-link">
-
-            {{ nav_icon("user") }}
-
-            <span>Profiles</span>
-
-        </a>
-
-    </nav>
-
-</div>
-
+{% block scripts %}
 
 <script>
 
@@ -1279,7 +1068,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 </script>
-
 
 <script>
 
@@ -1615,5 +1403,4 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </script>
 
-</body>
-</html>
+{% endblock %}

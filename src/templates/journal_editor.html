@@ -1,0 +1,289 @@
+
+<dialog
+    id="journalEditor"
+    class="editor-dialog"
+    data-api-url="/api/journals"
+>
+
+    <header class="editor-header">
+
+        <div>
+            <div class="legacy-eyebrow">
+                Your story
+            </div>
+
+            <h2 id="editorJournalName">
+                My Journal
+            </h2>
+        </div>
+
+        <div class="editor-header-actions">
+
+            <span
+                id="editorSaveStatus"
+                class="editor-save-status"
+                role="status"
+                aria-live="polite"
+            >
+                Ready
+            </span>
+
+            <button
+                type="button"
+                id="editorClose"
+                class="legacy-button"
+            >
+                Close journal
+            </button>
+
+        </div>
+
+    </header>
+
+    <form id="journalEditorForm">
+
+        <input
+            type="hidden"
+            name="_csrf_token"
+            value="{{ csrf_token() }}"
+        >
+
+        <div class="editor-toolbar">
+
+            <div class="editor-navigation">
+
+                <button
+                    type="button"
+                    id="editorPrevious"
+                    class="legacy-button"
+                    aria-label="Previous entry"
+                >
+                    &larr;
+                </button>
+
+                <span id="editorPosition">
+                    Entry 1
+                </span>
+
+                <button
+                    type="button"
+                    id="editorNext"
+                    class="legacy-button"
+                    aria-label="Next entry"
+                >
+                    &rarr;
+                </button>
+
+            </div>
+
+            <button
+                type="button"
+                id="editorNewEntry"
+                class="legacy-button"
+            >
+                + New entry
+            </button>
+
+        </div>
+
+        <main class="editor-writing-stage">
+
+            <div
+                id="editorBook"
+                class="editor-book lined single classic"
+            >
+
+                <section class="editor-page">
+
+                    <div class="editor-page-header">
+
+                        <time id="editorDate"></time>
+
+                        <span id="editorEntryStatus">
+                            Draft
+                        </span>
+
+                    </div>
+
+                    <input
+                        type="text"
+                        id="editorTitle"
+                        name="title"
+                        class="editor-title"
+                        placeholder="Give this moment a title..."
+                        aria-label="Entry title"
+                        maxlength="200"
+                        autocomplete="off"
+                    >
+
+                    <textarea
+                        id="editorContent"
+                        name="content"
+                        class="editor-content"
+                        placeholder="What would you like to remember about today?"
+                        aria-label="Journal entry"
+                        maxlength="250000"
+                        spellcheck="true"
+                    ></textarea>
+
+                    <div class="editor-page-footer">
+
+                        <span id="editorWordCount">
+                            0 words
+                        </span>
+
+                        <span>
+                            Your Legacy
+                        </span>
+
+                    </div>
+
+                </section>
+
+                <aside class="editor-page editor-second-page">
+
+                    <div class="editor-reflection">
+
+                        <div class="editor-reflection-emblem">
+                            &#10023;
+                        </div>
+
+                        <h3>A moment to reflect</h3>
+
+                        <p>
+                            What happened today that
+                            you want to remember?
+                        </p>
+
+                        <p>
+                            What did you learn about
+                            yourself?
+                        </p>
+
+                        <p>
+                            What would you want someone
+                            you love to know about this
+                            moment?
+                        </p>
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </main>
+
+        <section class="editor-privacy">
+
+            <div class="editor-privacy-heading">
+
+                <div>
+                    <h3>AI participation</h3>
+
+                    <p>
+                        Your writing is currently private
+                        and excluded from AI retrieval.
+                    </p>
+                </div>
+
+                <span class="editor-private-label">
+                    Private
+                </span>
+
+            </div>
+
+            <div class="editor-privacy-controls">
+
+                <div class="editor-privacy-field">
+
+                    <label for="editorJournalPrivacy">
+                        Journal default
+                    </label>
+
+                    <select
+                        id="editorJournalPrivacy"
+                    >
+                        <option value="private">
+                            Private — exclude from AI
+                        </option>
+
+                        <option value="include">
+                            Include in my Legacy AI
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="editor-privacy-field">
+
+                    <label for="editorEntryPrivacy">
+                        This entry
+                    </label>
+
+                    <select
+                        id="editorEntryPrivacy"
+                    >
+                        <option value="inherit">
+                            Use journal preference
+                        </option>
+
+                        <option value="private">
+                            Keep this entry private
+                        </option>
+
+                        <option value="include">
+                            Include in my Legacy AI
+                        </option>
+                    </select>
+
+                </div>
+
+            </div>
+
+            <p class="editor-privacy-note">
+                AI participation controls will become
+                available once secure memory processing
+                is enabled.
+            </p>
+
+        </section>
+
+        <p
+            id="editorError"
+            class="editor-error"
+            role="alert"
+            hidden
+        ></p>
+
+        <footer class="editor-footer">
+
+            <p>
+                Changes are automatically saved.
+            </p>
+
+            <div class="editor-footer-actions">
+
+                <button
+                    type="button"
+                    id="editorSaveDraft"
+                    class="legacy-button"
+                >
+                    Save changes
+                </button>
+
+                <button
+                    type="submit"
+                    id="editorFinish"
+                    class="legacy-button legacy-button-primary"
+                >
+                    Finish entry
+                </button>
+
+            </div>
+
+        </footer>
+
+    </form>
+
+</dialog>
