@@ -468,6 +468,50 @@ def validate_synthesis(response, payload):
     return result
 
 
+
+def alias_synthesis_evidence(payload):
+    """Assign short, request-local evidence identifiers."""
+
+    aliases = {}
+    counter = 0
+
+    for section in ("traits", "formulations"):
+        for key, item in payload[section].items():
+            mapping = {}
+
+            for evidence in item["evidence"]:
+                counter += 1
+                alias = f"E{counter:04d}"
+                mapping[alias] = evidence["evidence_id"]
+                evidence["evidence_id"] = alias
+
+            aliases[(section, key)] = mapping
+
+    return aliases
+
+
+def restore_synthesis_evidence(result, aliases):
+    """Restore canonical IDs after strict validation."""
+
+    for section, key_field in (
+        ("traits", "trait_key"),
+        ("formulations", "formulation_key"),
+    ):
+        for item in result[section]:
+            mapping = aliases[(section, item[key_field])]
+
+            for field in (
+                "supporting_evidence",
+                "contradictory_evidence",
+            ):
+                item[field] = [
+                    mapping[alias]
+                    for alias in item[field]
+                ]
+
+    return result
+
+
 def synthesize_assessments(assessments):
 
     payload = build_payload(assessments)
@@ -480,12 +524,22 @@ def synthesize_assessments(assessments):
             "usage": None,
         }
 
+    aliases = alias_synthesis_evidence(payload)
+
     response = _get_client().chat.completions.create(
         model=DEFAULT_MODEL,
         messages=[
             {
                 "role": "system",
-                "content": SYNTHESIS_PROMPT,
+                "content": SYNTHESIS_PROMPT + """
+
+EVIDENCE IDENTIFIERS:
+Cite only the short evidence_id values supplied for
+the current trait or formulation, such as E0001.
+Never cite assessment_id, memory_id, passage_id,
+document_id, or evidence belonging to another area.
+Copy each evidence_id exactly.
+""",
             },
             {
                 "role": "user",
@@ -526,6 +580,7 @@ def synthesize_assessments(assessments):
             usage,
         ) from error
 
+    result = restore_synthesis_evidence(result, aliases)
     result["usage"] = usage
 
     return result

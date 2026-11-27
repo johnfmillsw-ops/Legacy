@@ -602,29 +602,40 @@ def process_synthesis(profile_id, owner_id):
                     "Evidence changed during synthesis."
                 )
 
-            try:
+            for attempt in range(3):
 
-                partial = synthesize_assessments(
-                    partition
-                )
+                try:
+                    partial = synthesize_assessments(partition)
 
-            except Exception as error:
+                except AnalysisResponseError as error:
 
-                persist_usage(
-                    profile_id,
-                    job["id"],
-                    getattr(error, "usage", None),
-                    "invalid_response",
-                )
+                    persist_usage(
+                        profile_id,
+                        job["id"],
+                        getattr(error, "usage", None),
+                        "invalid_response",
+                    )
 
-                raise
+                    if attempt == 2:
+                        raise
 
-            persist_usage(
-                profile_id,
-                job["id"],
-                partial.get("usage"),
-                "success",
-            )
+                    print(
+                        "[Personality] Retrying synthesis partition:",
+                        attempt + 1,
+                        str(error),
+                        flush=True,
+                    )
+
+                else:
+
+                    persist_usage(
+                        profile_id,
+                        job["id"],
+                        partial.get("usage"),
+                        "success",
+                    )
+
+                    break
 
             result["traits"].extend(
                 partial["traits"]
