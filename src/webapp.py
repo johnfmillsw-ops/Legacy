@@ -31,6 +31,7 @@ from flask import (
 )
 
 from flask_login import login_required, current_user
+from itsdangerous import URLSafeTimedSerializer, BadData
 
 from auth import initialize_auth, csrf_token
 
@@ -46,6 +47,8 @@ from database import (
 from storage import save_upload
 from questions import QUESTIONS
 from guidance import generate_guidance_response
+from voice_access import voice_playback_allowed
+from voice_synthesis import synthesize_voice
 from exporter import render_summary_md
 from summarizer import (
     update_core_summary,
@@ -79,12 +82,15 @@ app.config.update(
 
 initialize_database()
 initialize_auth(app)
+
 from memory_review import memory_review_bp
 
 app.register_blueprint(memory_review_bp)
+
 from voice_journal_routes import voice_journal_bp
 
 app.register_blueprint(voice_journal_bp)
+
 
 # --------------------------------------------------
 # Application-wide security
@@ -132,7 +138,6 @@ def security_headers(response):
         "Referrer-Policy"
     ] = "no-referrer"
 
-
     if request.endpoint == "static" and response.status_code in (200, 304):
 
         response.headers["Cache-Control"] = (
@@ -144,7 +149,6 @@ def security_headers(response):
         response.headers["Cache-Control"] = "no-store"
 
     return response
-
 
 
 # --------------------------------------------------
@@ -239,7 +243,6 @@ def active_profile():
     return record
 
 
-
 def load_or_create(record):
 
     if record is None or record["owner_id"] != current_user.id:
@@ -268,7 +271,6 @@ def load_or_create(record):
         abort(403)
 
     return profile
-
 
 
 def save_profile(record, profile):
@@ -696,6 +698,11 @@ def guidance():
 
     profile = load_or_create(record)
 
+    voice_enabled = voice_playback_allowed(
+        current_user.id,
+        record["id"],
+    )
+
     if request.method == "POST":
 
         question = (
@@ -748,11 +755,26 @@ def guidance():
 
             save_profile(record, profile)
 
+            voice_token = None
+
+            if voice_enabled:
+
+                voice_token = URLSafeTimedSerializer(
+                    app.secret_key,
+                    salt="legacy-voice",
+                ).dumps({
+                    "owner_id": current_user.id,
+                    "profile_id": record["id"],
+                    "text": generated["answer"],
+                })
+
             return render_template(
                 "guidance.html",
                 subject=record["display_name"],
                 answer=generated["answer"],
                 question=question,
+                voice_enabled=voice_enabled,
+                voice_token=voice_token,
             )
 
         except Exception:
@@ -773,7 +795,104 @@ def guidance():
         subject=record["display_name"],
         answer=None,
         question=None,
+        voice_enabled=voice_enabled,
+        voice_token=None,
     )
+
+
+# --------------------------------------------------
+# ElevenLabs voice playback
+# --------------------------------------------------
+
+@app.route("/guidance/speak", methods=["POST"])
+@login_required
+def guidance_speak():
+
+    record = active_profile()
+
+    if record is None:
+        abort(403)
+
+    if not voice_playback_allowed(
+        current_user.id,
+        record["id"],
+    ):
+        abort(403)
+
+    profile = load_or_create(record)
+
+    if not remote_allowed(profile):
+        abort(403)
+
+    if request.form.get("voice_consent") != "yes":
+        abort(403)
+
+    token = request.form.get("voice_token", "")
+
+    if not token or len(token) > 20000:
+        abort(400)
+
+    try:
+
+        payload = URLSafeTimedSerializer(
+            app.secret_key,
+            salt="legacy-voice",
+        ).loads(
+            token,
+            max_age=1800,
+        )
+
+    except BadData:
+
+        abort(403)
+
+    if not isinstance(payload, dict):
+        abort(403)
+
+    if (
+        payload.get("owner_id") != current_user.id
+        or payload.get("profile_id") != record["id"]
+    ):
+        abort(403)
+
+    text = payload.get("text")
+
+    if not isinstance(text, str):
+        abort(400)
+
+    if not text.strip() or len(text.strip()) > 4000:
+        abort(400)
+
+    try:
+
+        audio = synthesize_voice(
+            text,
+            current_user.id,
+            record["id"],
+        )
+
+        return send_file(
+            BytesIO(audio),
+            mimetype="audio/mpeg",
+            as_attachment=False,
+            download_name="legacy-guidance.mp3",
+        )
+
+    except ValueError:
+
+        abort(400)
+
+    except PermissionError:
+
+        abort(403)
+
+    except Exception:
+
+        app.logger.warning(
+            "Voice synthesis failed."
+        )
+
+        abort(502)
 
 
 # --------------------------------------------------
@@ -914,24 +1033,31 @@ def upload_summary():
         )
 
         if uploaded_document is None:
+
             app.logger.error(
                 "Indexed document could not be found for extraction."
             )
+
         elif remote_allowed(latest_profile):
+
             extraction_profile_id = record["id"]
             extraction_owner_id = current_user.id
             extraction_document_id = uploaded_document["id"]
             extraction_chunk_count = result["chunk_count"]
 
             def process_uploaded_memories():
+
                 try:
+
                     extract_document_memories(
                         profile_id=extraction_profile_id,
                         owner_id=extraction_owner_id,
                         document_id=extraction_document_id,
                         max_chunks=extraction_chunk_count,
                     )
+
                 except Exception:
+
                     app.logger.exception(
                         "Automatic memory extraction failed."
                     )
@@ -940,7 +1066,9 @@ def upload_summary():
                 target=process_uploaded_memories,
                 daemon=True,
             ).start()
+
         else:
+
             app.logger.info(
                 "Document indexed locally; remote extraction disabled."
             )
@@ -982,8 +1110,7 @@ def upload_summary():
     finally:
 
         # Remove the temporary uploaded file.
-        # The extracted text is preserved in PostgreSQL
-        # after successful indexing.
+        # The extracted text is preserved in PostgreSQL.
         if path is not None:
             path.unlink(missing_ok=True)
 

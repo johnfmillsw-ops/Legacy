@@ -17,8 +17,6 @@
 
     <style>
 
-        /* Guidance workspace */
-
         .guidance-workspace {
             display: flex;
             flex-direction: column;
@@ -66,8 +64,6 @@
             font-size: 13px;
             overflow-wrap: anywhere;
         }
-
-        /* Conversation */
 
         .guidance-conversation {
             display: flex;
@@ -124,8 +120,6 @@
             line-height: 1.8;
         }
 
-        /* Suggested questions */
-
         .guidance-suggestions {
             display: grid;
             grid-template-columns: repeat(
@@ -175,8 +169,6 @@
             line-height: 1.5;
         }
 
-        /* User message */
-
         .guidance-user-message {
             align-self: flex-end;
             max-width: 85%;
@@ -204,8 +196,6 @@
             white-space: pre-wrap;
             overflow-wrap: anywhere;
         }
-
-        /* Legacy response */
 
         .guidance-answer {
             display: flex;
@@ -268,7 +258,37 @@
             line-height: 1.6;
         }
 
-        /* Message composer */
+        /* Voice playback */
+
+        .guidance-playback {
+            margin-top: 18px;
+        }
+
+        .guidance-playback-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .guidance-playback-controls button:disabled {
+            opacity: 0.45;
+            cursor: default;
+        }
+
+        .guidance-speech-status {
+            margin-top: 8px;
+            color: var(--text-muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .guidance-voice-disclosure {
+            margin-top: 8px;
+            color: var(--text-muted);
+            font-size: 11px;
+            line-height: 1.5;
+        }
 
         .guidance-composer {
             position: sticky;
@@ -362,8 +382,6 @@
             line-height: 1.6;
         }
 
-        /* Loading indicator */
-
         .guidance-loading {
             display: flex;
             align-items: center;
@@ -415,8 +433,6 @@
             }
         }
 
-        /* Desktop */
-
         @media (min-width: 1024px) {
 
             .guidance-workspace {
@@ -437,8 +453,6 @@
             }
 
         }
-
-        /* Mobile */
 
         @media (max-width: 600px) {
 
@@ -530,8 +544,6 @@
 
 <body class="legacy-app">
 
-<!-- Navigation icons -->
-
 {% macro nav_icon(name) %}
 
 <svg width="22"
@@ -609,6 +621,12 @@
                 fill="currentColor"
                 stroke="none"/>
 
+    {% elif name == "speaker" %}
+
+        <path d="M11 5 6 9H3v6h3l5 4z"/>
+        <path d="M15 9a4 4 0 0 1 0 6"/>
+        <path d="M18 5a10 10 0 0 1 0 14"/>
+
     {% endif %}
 
 </svg>
@@ -617,8 +635,6 @@
 
 
 <div class="legacy-shell">
-
-    <!-- Desktop sidebar -->
 
     <aside class="legacy-sidebar">
 
@@ -719,8 +735,6 @@
     </aside>
 
 
-    <!-- Mobile header -->
-
     <header class="legacy-mobile-header">
 
         <a href="{{ url_for('dashboard') }}"
@@ -742,8 +756,6 @@
 
     </header>
 
-
-    <!-- Main Guidance workspace -->
 
     <main class="legacy-main">
 
@@ -776,8 +788,6 @@
             </header>
 
 
-            <!-- System messages -->
-
             {% with messages = get_flashed_messages() %}
 
                 {% if messages %}
@@ -797,14 +807,10 @@
             {% endwith %}
 
 
-            <!-- Conversation -->
-
             <section class="guidance-conversation"
                      aria-label="Guidance conversation">
 
                 {% if answer %}
-
-                    <!-- User question -->
 
                     <article class="guidance-user-message">
 
@@ -816,8 +822,6 @@
 
                     </article>
 
-
-                    <!-- Generated response -->
 
                     <article class="guidance-answer">
 
@@ -831,64 +835,63 @@
 
                             <div class="guidance-answer-heading">
 
-                                <strong>
-                                    Legacy
-                                </strong>
+                                <strong>Legacy</strong>
 
                             </div>
 
+                            <div class="guidance-answer-content"
+                                 id="legacyAnswer">{{ answer }}</div>
 
-<div class="guidance-answer-content"
-     id="legacyAnswer">{{ answer }}</div>
 
-<div id="legacyPlayback"
-     style="margin-top:18px;"
-     hidden>
+                            {% if voice_enabled and voice_token %}
 
-    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            <div id="legacyPlayback"
+                                 class="guidance-playback"
+                                 data-endpoint="{{ url_for('guidance_speak') }}"
+                                 data-token="{{ voice_token }}">
 
-        <button type="button"
-                id="legacySpeak"
-                class="legacy-button"
-                style="color:var(--accent)!important;">
+                                <div class="guidance-playback-controls">
 
-            <svg width="18" height="18"
-                 viewBox="0 0 24 24"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="1.7"
-                 stroke-linecap="round"
-                 stroke-linejoin="round"
-                 aria-hidden="true">
+                                    <button type="button"
+                                            id="legacySpeak"
+                                            class="legacy-button"
+                                            aria-describedby="legacyVoiceDisclosure"
+                                            style="color:var(--accent)!important;">
 
-                <path d="M11 5 6 9H3v6h3l5 4z"/>
-                <path d="M15 9a4 4 0 0 1 0 6"/>
-                <path d="M18 5a10 10 0 0 1 0 14"/>
+                                        {{ nav_icon("speaker") }}
 
-            </svg>
+                                        <span id="legacySpeakLabel">
+                                            Read aloud
+                                        </span>
 
-            <span id="legacySpeakLabel">Read aloud</span>
+                                    </button>
 
-        </button>
+                                    <button type="button"
+                                            id="legacyStop"
+                                            class="legacy-button"
+                                            disabled>
 
-        <button type="button"
-                id="legacyStop"
-                class="legacy-button"
-                disabled>
+                                        Stop
 
-            Stop
+                                    </button>
 
-        </button>
+                                </div>
 
-    </div>
+                                <div id="legacySpeechStatus"
+                                     class="guidance-speech-status"
+                                     role="status"
+                                     aria-live="polite">
+                                </div>
 
-    <div id="legacySpeechStatus"
-         role="status"
-         aria-live="polite"
-         style="font-size:12px; color:var(--text-muted); margin-top:8px;">
-    </div>
+                                <div id="legacyVoiceDisclosure"
+                                     class="guidance-voice-disclosure">
+                                    Read aloud sends this response
+                                    to ElevenLabs for voice synthesis.
+                                </div>
 
-</div>
+                            </div>
+
+                            {% endif %}
 
 
                             <div class="guidance-answer-note">
@@ -905,8 +908,6 @@
                     </article>
 
                 {% else %}
-
-                    <!-- Empty conversation -->
 
                     <div class="guidance-empty">
 
@@ -935,9 +936,6 @@
                             of looking at life.
 
                         </p>
-
-
-                        <!-- Suggested prompts -->
 
                         <div class="guidance-suggestions">
 
@@ -1018,8 +1016,6 @@
             </section>
 
 
-            <!-- Message composer -->
-
             <section class="guidance-composer"
                      aria-label="Ask a question">
 
@@ -1092,8 +1088,6 @@
     </main>
 
 
-    <!-- Mobile navigation -->
-
     <nav class="legacy-mobile-nav"
          aria-label="Mobile navigation">
 
@@ -1163,9 +1157,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let submitting = false;
 
-
-    // Automatically resize the message composer.
-
     function resizeQuestion() {
 
         question.style.height = "auto";
@@ -1176,9 +1167,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     question.addEventListener("input", resizeQuestion);
-
-
-    // Suggested questions populate the composer.
 
     document.querySelectorAll(".guidance-suggestion")
         .forEach(function (button) {
@@ -1198,10 +1186,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
         });
-
-
-    // Enter sends on desktop.
-    // Shift + Enter creates a new line.
 
     question.addEventListener("keydown", function (event) {
 
@@ -1227,10 +1211,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
     });
-
-
-    // Preserve the existing form submission.
-    // Display a loading state while Flask generates the answer.
 
     form.addEventListener("submit", function (event) {
 
@@ -1271,9 +1251,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     });
 
-
-    // Restore controls if the browser restores the page.
-
     window.addEventListener("pageshow", function () {
 
         submitting = false;
@@ -1303,166 +1280,129 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </script>
 
+
 <script>
 
 (function () {
 
-    const answer = document.getElementById("legacyAnswer");
     const controls = document.getElementById("legacyPlayback");
+
+    if (!controls) {
+        return;
+    }
+
     const speakButton = document.getElementById("legacySpeak");
     const speakLabel = document.getElementById("legacySpeakLabel");
     const stopButton = document.getElementById("legacyStop");
     const status = document.getElementById("legacySpeechStatus");
+    const form = document.getElementById("guidanceForm");
 
-    if (!answer || !controls) {
-        return;
-    }
+    const csrfToken = form.querySelector(
+        'input[name="_csrf_token"]'
+    ).value;
 
-    if (
-        !("speechSynthesis" in window) ||
-        !("SpeechSynthesisUtterance" in window)
-    ) {
-        return;
-    }
+    const audio = new Audio();
 
-    const synth = window.speechSynthesis;
+    audio.preload = "none";
 
-    let utterance = null;
+    let audioUrl = null;
     let state = "idle";
+    let disposed = false;
     let generation = 0;
-    let chunks = [];
-    let chunkIndex = 0;
-
-    controls.hidden = false;
 
     function updateControls(nextState, message = "") {
 
         state = nextState;
 
         speakLabel.textContent =
+            state === "loading" ? "Preparing voice..." :
             state === "playing" ? "Pause" :
             state === "paused" ? "Resume" :
+            audioUrl ? "Play again" :
             "Read aloud";
 
-        stopButton.disabled = state === "idle";
+        speakButton.disabled =
+            state === "loading" || disposed;
+
+        stopButton.disabled =
+            state === "idle" ||
+            state === "loading" ||
+            disposed;
 
         status.textContent = message;
 
     }
 
-    function splitText(text) {
+    async function playAudio() {
 
-        const words = text.trim().split(/\s+/);
-        const parts = [];
-
-        let part = "";
-
-        words.forEach(function (word) {
-
-            if (part && (part.length + word.length + 1) > 220) {
-                parts.push(part);
-                part = word;
-            } else {
-                part += (part ? " " : "") + word;
-            }
-
-        });
-
-        if (part) {
-            parts.push(part);
+        if (disposed) {
+            return;
         }
 
-        return parts;
+        const token = generation;
+
+        try {
+
+            await audio.play();
+
+            if (disposed || token !== generation) {
+
+                audio.pause();
+
+                return;
+
+            }
+
+            updateControls(
+                "playing",
+                "Reading aloud..."
+            );
+
+        } catch (error) {
+
+            if (!disposed && token === generation) {
+
+                updateControls(
+                    "idle",
+                    "Audio is ready. Press Play again."
+                );
+
+            }
+
+        }
 
     }
 
-    function getLocalVoice() {
-
-        const voices = synth.getVoices().filter(function (voice) {
-            return voice.localService && /^en(?:-|$)/i.test(voice.lang);
-        });
-
-        return voices.find(function (voice) {
-            return voice.default;
-        }) || voices.find(function (voice) {
-            return voice.lang === "en-US";
-        }) || voices[0] || null;
-
-    }
-
-    function stopPlayback(message = "") {
+    function stopPlayback() {
 
         generation++;
 
-        synth.cancel();
+        audio.pause();
 
-        utterance = null;
-        chunks = [];
-        chunkIndex = 0;
+        if (audioUrl) {
+            audio.currentTime = 0;
+        }
 
-        updateControls("idle", message);
+        updateControls("idle");
 
     }
 
-    function playNext(token, voice) {
+    speakButton.addEventListener("click", async function () {
 
-        if (token !== generation) {
+        if (disposed || state === "loading") {
             return;
         }
-
-        if (chunkIndex >= chunks.length) {
-
-            utterance = null;
-
-            updateControls("idle", "Playback complete.");
-
-            return;
-
-        }
-
-        utterance = new SpeechSynthesisUtterance(
-            chunks[chunkIndex]
-        );
-
-        utterance.voice = voice;
-        utterance.lang = voice.lang;
-        utterance.rate = 0.95;
-        utterance.pitch = 1;
-        utterance.volume = 1;
-
-        utterance.onend = function () {
-
-            if (token !== generation) {
-                return;
-            }
-
-            chunkIndex++;
-
-            playNext(token, voice);
-
-        };
-
-        utterance.onerror = function () {
-
-            if (token !== generation) {
-                return;
-            }
-
-            stopPlayback("Voice playback unavailable. Please try again.");
-
-        };
-
-        synth.speak(utterance);
-
-    }
-
-    speakButton.addEventListener("click", function () {
 
         if (state === "playing") {
 
-            synth.pause();
+            generation++;
 
-            updateControls("paused", "Playback paused.");
+            audio.pause();
+
+            updateControls(
+                "paused",
+                "Playback paused."
+            );
 
             return;
 
@@ -1470,42 +1410,124 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (state === "paused") {
 
-            synth.resume();
-
-            updateControls("playing", "Reading aloud...");
+            await playAudio();
 
             return;
 
         }
 
-        const voice = getLocalVoice();
+        // Reuse generated audio without another API request.
 
-        if (!voice) {
+        if (audioUrl) {
 
-            updateControls(
-                "idle",
-                "No local English voice is available on this device."
+            audio.currentTime = 0;
+
+            await playAudio();
+
+            return;
+
+        }
+
+        // The Read aloud button initiates voice synthesis.
+        // The adjacent disclosure identifies the remote provider.
+        // No confirmation popup or credit warning is displayed.
+
+        const token = ++generation;
+
+        updateControls(
+            "loading",
+            "Preparing voice..."
+        );
+
+        try {
+
+            const body = new URLSearchParams();
+
+            body.set("_csrf_token", csrfToken);
+            body.set("voice_token", controls.dataset.token);
+            body.set("voice_consent", "yes");
+
+            const response = await fetch(
+                controls.dataset.endpoint,
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    cache: "no-store",
+                    headers: {
+                        "Content-Type":
+                            "application/x-www-form-urlencoded"
+                    },
+                    body: body.toString()
+                }
             );
 
-            return;
+            if (!response.ok) {
+
+                if (response.status === 403) {
+
+                    throw new Error(
+                        "Voice playback is unavailable."
+                    );
+
+                }
+
+                if (response.status === 400) {
+
+                    throw new Error(
+                        "This response cannot be played aloud."
+                    );
+
+                }
+
+                if (response.status === 429) {
+
+                    throw new Error(
+                        "Voice playback is temporarily unavailable."
+                    );
+
+                }
+
+                throw new Error(
+                    "Unable to prepare voice. Please try again later."
+                );
+
+            }
+
+            const contentType =
+                response.headers.get("Content-Type") || "";
+
+            if (!contentType.includes("audio/mpeg")) {
+
+                throw new Error(
+                    "Unable to load voice playback."
+                );
+
+            }
+
+            const blob = await response.blob();
+
+            if (disposed || token !== generation) {
+                return;
+            }
+
+            audioUrl = URL.createObjectURL(blob);
+
+            audio.src = audioUrl;
+
+            await playAudio();
+
+        } catch (error) {
+
+            if (!disposed && token === generation) {
+
+                updateControls(
+                    "idle",
+                    error.message || "Voice playback unavailable."
+                );
+
+            }
 
         }
-
-        const text = answer.textContent.trim();
-
-        if (!text) {
-            return;
-        }
-
-        stopPlayback();
-
-        chunks = splitText(text);
-
-        chunkIndex = 0;
-
-        updateControls("playing", "Reading aloud...");
-
-        playNext(generation, voice);
 
     });
 
@@ -1515,23 +1537,83 @@ document.addEventListener("DOMContentLoaded", function () {
 
     });
 
-    window.addEventListener("pagehide", function () {
+    audio.addEventListener("ended", function () {
 
-        stopPlayback();
+        if (!disposed) {
+
+            updateControls(
+                "idle",
+                "Playback complete."
+            );
+
+        }
 
     });
 
-    document.getElementById("guidanceForm")
-        .addEventListener("submit", function () {
+    audio.addEventListener("error", function () {
+
+        if (!disposed && state !== "loading") {
+
+            updateControls(
+                "idle",
+                "Unable to play the generated audio."
+            );
+
+        }
+
+    });
+
+    window.addEventListener("pagehide", function () {
+
+        disposed = true;
+
+        generation++;
+
+        audio.pause();
+
+        audio.removeAttribute("src");
+
+        audio.load();
+
+        if (audioUrl) {
+
+            URL.revokeObjectURL(audioUrl);
+
+            audioUrl = null;
+
+        }
+
+    });
+
+    window.addEventListener("pageshow", function (event) {
+
+        if (event.persisted) {
+
+            disposed = false;
+
+            updateControls("idle");
+
+        }
+
+    });
+
+    form.addEventListener("submit", function (event) {
+
+        if (!event.defaultPrevented) {
+
+            disposed = true;
 
             stopPlayback();
 
-        });
+        }
+
+    });
+
+    updateControls("idle");
 
 })();
 
 </script>
-
 
 </body>
 </html>
