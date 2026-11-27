@@ -449,6 +449,7 @@ _extraction_jobs = set()
 _extraction_lock = Lock()
 
 
+
 def schedule_journal_extraction(
     profile_id,
     owner_id,
@@ -459,34 +460,56 @@ def schedule_journal_extraction(
     if not document_id:
         return
 
-    if result.get("already_indexed"):
-        return
-
     with _extraction_lock:
         if document_id in _extraction_jobs:
+            return
+
+        if not begin_journal_learning(
+            profile_id, owner_id, document_id
+        ):
             return
 
         _extraction_jobs.add(document_id)
 
     def worker():
         try:
-            extract_written_journal_memories(
+            outcome = extract_written_journal_memories(
                 profile_id,
                 owner_id,
                 document_id,
             )
-        except PermissionError:
-            pass
+
+            if not isinstance(outcome, dict):
+                raise RuntimeError("Extraction did not complete.")
+
+            finish_journal_learning(
+                profile_id,
+                document_id,
+                "complete",
+                outcome,
+            )
+
         except Exception:
-            print("Journal memory extraction failed.")
+            finish_journal_learning(
+                profile_id,
+                document_id,
+                "failed",
+            )
+
         finally:
             with _extraction_lock:
                 _extraction_jobs.discard(document_id)
 
-    Thread(
-        target=worker,
-        daemon=True,
-    ).start()
+    try:
+        Thread(target=worker, daemon=True).start()
+    except Exception:
+        with _extraction_lock:
+            _extraction_jobs.discard(document_id)
+
+        finish_journal_learning(
+            profile_id, document_id, "failed"
+        )
+        raise
 
 
 def index_journal_entry(
@@ -709,3 +732,232 @@ def index_written_entry(entry_id):
             "Indexing failed. Please retry.",
             503,
         )
+
+
+# JOURNAL LEARNING STATUS
+
+from database import database_connection
+from journal_privacy import (
+    lock_profile,
+    load_entry_privacy,
+    entry_is_eligible,
+)
+from psycopg.types.json import Jsonb
+
+
+def begin_journal_learning(
+    profile_id, owner_id, document_id
+):
+    with database_connection() as conn:
+        with conn.cursor() as cur:
+            lock_profile(cur, profile_id, owner_id)
+
+            cur.execute(
+                """
+                SELECT metadata
+                FROM knowledge_documents
+                WHERE id = %s AND profile_id = %s
+                FOR UPDATE
+                """,
+                (document_id, profile_id),
+            )
+
+            row = cur.fetchone()
+
+            if not row:
+                return False
+
+            metadata = row["metadata"] or {}
+
+            if metadata.get("origin") != "written_journal":
+                return False
+
+            entry = load_entry_privacy(
+                cur,
+                metadata["journal_entry_id"],
+                profile_id,
+                owner_id,
+                lock=True,
+            )
+
+            if not (
+                entry_is_eligible(entry)
+                and entry["allow_ai_processing"]
+                and entry["document_id"] == document_id
+            ):
+                return False
+
+            if metadata.get("learning_status") == "complete":
+                return False
+
+            cur.execute(
+                """
+                UPDATE knowledge_documents
+                SET metadata = metadata || %s
+                WHERE id = %s AND profile_id = %s
+                """,
+                (
+                    Jsonb({"learning_status": "processing"}),
+                    document_id,
+                    profile_id,
+                ),
+            )
+
+            return True
+
+
+def finish_journal_learning(
+    profile_id, document_id, status, outcome=None
+):
+    with database_connection() as conn:
+        with conn.cursor() as cur:
+
+            cur.execute(
+                """
+                SELECT COUNT(*) AS total
+                FROM knowledge_chunks
+                WHERE document_id = %s
+                """,
+                (document_id,),
+            )
+
+            total = cur.fetchone()["total"]
+
+            if status == "complete":
+                processed = (outcome or {}).get(
+                    "chunks_processed", 0
+                )
+
+                if not total or processed != total:
+                    status = "failed"
+
+            cur.execute(
+                """
+                UPDATE knowledge_documents
+                SET metadata = metadata || %s
+                WHERE id = %s
+                  AND profile_id = %s
+                  AND metadata ->> 'origin' = 'written_journal'
+                """,
+                (
+                    Jsonb({"learning_status": status}),
+                    document_id,
+                    profile_id,
+                ),
+            )
+
+
+@journal_bp.get("/entries/<entry_id>/learning")
+@login_required
+def entry_learning_status(entry_id):
+
+    profile_id = session.get("profile_id")
+    owner_id = current_user.id
+
+    if not profile_id:
+        return error_response("No active profile.", 403)
+
+    try:
+        with database_connection() as conn:
+            with conn.cursor() as cur:
+
+                lock_profile(cur, profile_id, owner_id)
+
+                entry = load_entry_privacy(
+                    cur,
+                    entry_id,
+                    profile_id,
+                    owner_id,
+                    lock=True,
+                )
+
+                status = "private"
+                memory_count = 0
+                searchable = False
+
+                if entry["status"] != "published":
+                    status = "draft"
+
+                elif entry_is_eligible(entry):
+
+                    status = "retry_required"
+
+                    if (
+                        entry["allow_ai_processing"]
+                        and entry["document_id"]
+                    ):
+                        document_id = entry["document_id"]
+
+                        cur.execute(
+                            """
+                            SELECT metadata
+                            FROM knowledge_documents
+                            WHERE id = %s
+                              AND profile_id = %s
+                              AND metadata ->> 'origin'
+                                  = 'written_journal'
+                              AND metadata ->> 'journal_entry_id'
+                                  = %s
+                            """,
+                            (document_id, profile_id, entry_id),
+                        )
+
+                        document = cur.fetchone()
+
+                        if document:
+                            searchable = True
+                            metadata = document["metadata"] or {}
+
+                            cur.execute(
+                                """
+                                SELECT COUNT(*) AS total
+                                FROM structured_memories
+                                WHERE profile_id = %s
+                                  AND source_document_id = %s
+                                  AND status = 'approved'
+                                """,
+                                (profile_id, document_id),
+                            )
+
+                            memory_count = cur.fetchone()["total"]
+
+                            if metadata.get("learning_status") == "complete":
+                                status = "complete"
+                            elif document_id in _extraction_jobs:
+                                status = "processing"
+
+                return jsonify(
+                    success=True,
+                    status=status,
+                    memory_count=memory_count,
+                    searchable=searchable,
+                )
+
+    except PermissionError:
+        return error_response("Entry access denied.", 403)
+
+
+
+# MASTER AI CONSENT STATUS
+
+@journal_bp.get("/ai-consent")
+@login_required
+def journal_master_ai_consent():
+
+    record = authorized_profile()
+
+    if record is None:
+        return error_response("Profile access denied.", 403)
+
+    profile = record.get("profile_data") or {}
+    consent = profile.get("consent") or {}
+
+    enabled = (
+        consent.get("has_consent") is True
+        and consent.get("allow_remote_processing") is True
+    )
+
+    return jsonify(
+        success=True,
+        ai_enabled=enabled,
+    )

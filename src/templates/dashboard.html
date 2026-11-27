@@ -4,351 +4,450 @@
 {% block title %}Legacy — Your Story{% endblock %}
 
 {% block head %}
-<meta name="theme-color" content="#101215">
 <style>
-        .dashboard-hero {
-            position: relative;
-            overflow: hidden;
-            padding: clamp(24px, 5vw, 48px);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            background:
-                radial-gradient(
-                    ellipse at top right,
-                    #40372b 0%,
-                    transparent 65%
-                ),
-                var(--surface);
-        }
 
-        .dashboard-hero h1 {
-            font-family: var(--font-heading);
-            font-size: clamp(30px, 5vw, 48px);
-            font-weight: 400;
-            overflow-wrap: anywhere;
-        }
+.home-welcome {
+    padding: 12px 0 24px;
+}
 
-        .dashboard-hero p {
-            max-width: 540px;
-            color: var(--text-secondary);
-            margin: 12px 0 24px;
-        }
+.home-welcome h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(32px, 5vw, 46px);
+    font-weight: 400;
+    margin: 8px 0;
+}
 
-        .hero-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
+.home-welcome p {
+    color: var(--text-secondary);
+    max-width: 600px;
+}
 
-        .dashboard-section {
-            scroll-margin-top: 20px;
-        }
+.home-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: stretch;
+}
 
-        .section-heading {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
+.home-panel {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    padding: clamp(18px, 3vw, 26px);
+    min-width: 0;
+}
 
-        .section-heading h2 {
-            font-family: var(--font-heading);
-            font-weight: 400;
-            font-size: 25px;
-        }
+.home-panel h2 {
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 400;
+    margin: 6px 0 14px;
+}
 
-        .dashboard-stats {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-        }
+.home-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
 
-        .dashboard-stat {
-            padding: 18px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            border-radius: var(--radius-md);
-        }
+.home-journal-layout {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin: 20px 0;
+}
 
-        .stat-value {
-            color: var(--accent);
-            font-size: clamp(22px, 4vw, 32px);
-            font-weight: 500;
-        }
+.home-book {
+    position: relative;
+    flex: 0 0 128px;
+    aspect-ratio: 3 / 4;
+    border-radius: 4px 10px 10px 4px;
+    background: linear-gradient(
+        90deg,
+        #0004,
+        transparent 14%,
+        #ffffff09 16%,
+        transparent 30%
+    ), var(--book-color);
+    border: 1px solid #ffffff24;
+    box-shadow: 5px 8px 18px #0005;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px;
+    color: var(--book-accent);
+    overflow-wrap: anywhere;
+    font-family: Georgia, serif;
+}
 
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
+.home-book::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border: 1px solid currentColor;
+    opacity: .45;
+    border-radius: 3px;
+    pointer-events: none;
+}
 
-        .category-grid {
-            display: grid;
-            grid-template-columns: repeat(
-                2, minmax(0, 1fr)
-            );
-            gap: 10px;
-        }
+.home-book-emblem {
+    font-size: 25px;
+    margin-bottom: 14px;
+}
 
-        .category-card {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            min-height: 110px;
-            padding: 16px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text-primary) !important;
-            transition: background var(--transition);
-        }
+.home-book-title {
+    font-size: 15px;
+}
 
-        .category-card:hover {
-            background: var(--surface-raised);
-        }
+.home-journal-copy {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
 
-        .category-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: #302b24;
-            color: var(--accent);
-        }
+.home-journal-copy h3 {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
 
-        .category-name {
-            text-transform: capitalize;
-            font-size: 14px;
-            overflow-wrap: anywhere;
-        }
+.home-journal-copy p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 8px 0;
+}
 
-        .dashboard-details {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-        }
+.home-radar {
+    display: block;
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto;
+}
 
-        .dashboard-details summary {
-            padding: 18px 20px;
-            cursor: pointer;
-            font-weight: 500;
-            min-height: 54px;
-        }
+.home-identity-footer {
+    text-align: center;
+}
 
-        .details-content {
-            padding: 0 20px 20px;
-        }
+.home-link {
+    color: var(--accent);
+    font-size: 13px;
+    text-decoration: none;
+}
 
-        .consent-option {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            margin: 16px 0;
-            color: var(--text-secondary);
-        }
+.home-discovery {
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+}
 
-        .consent-option input {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-            margin-top: 4px;
-        }
+.home-discovery p {
+    margin: 8px 0;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
 
-        .dashboard-notice {
-            padding: 12px 14px;
-            margin-bottom: 16px;
-            background: var(--surface-raised);
-            border-radius: var(--radius-sm);
-            color: var(--warning);
-        }
+.home-discovery-category {
+    color: var(--accent);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
 
-        .dashboard-footer {
-            padding: 24px 0 8px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 12px;
-        }
+.home-discovery-source {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+}
 
-        .legacy-app [hidden] {
-            display: none !important;
-        }
+.home-activity {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 0;
+    border-top: 1px solid var(--border);
+}
 
-        @media (min-width: 768px) {
-            .category-grid {
-                grid-template-columns: repeat(
-                    auto-fit, minmax(145px, 1fr)
-                );
-            }
-        }
+.home-activity-icon {
+    flex: 0 0 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: var(--surface-raised);
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+}
 
-        @media (max-width: 480px) {
-            .hero-actions {
-                flex-direction: column;
-            }
+.home-activity-copy {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
 
-            .hero-actions .legacy-button {
-                width: 100%;
-            }
+.home-activity-link {
+    color: var(--text-primary);
+    text-decoration: none;
+}
 
-            .dashboard-stat {
-                padding: 14px;
-            }
-        }
-    </style>
+.home-activity-link:hover {
+    color: var(--accent);
+}
+
+.home-activity-copy small {
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.home-footer {
+    text-align: center;
+    padding: 28px 0;
+    color: var(--text-muted);
+    font-family: var(--font-heading);
+    font-size: 14px;
+}
+
+@media (max-width: 850px) {
+    .home-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 400px) {
+    .home-journal-layout {
+        gap: 16px;
+    }
+
+    .home-book {
+        flex-basis: 100px;
+    }
+}
+
+</style>
 {% endblock %}
 
 {% block content %}
 
-<!-- Welcome -->
+<header class="home-welcome">
+    <div class="legacy-eyebrow">Your personal legacy</div>
+    <h1>{{ subject }}</h1>
+    <p>
+        Your experiences, your perspectives,
+        and the story only you can tell.
+    </p>
+</header>
 
-            <section class="dashboard-hero">
+<div class="home-grid">
 
-                <div class="legacy-eyebrow">
-                    Your personal legacy
+    <section class="home-panel">
+
+        <div class="legacy-eyebrow">Your journal</div>
+        <h2>Continue your story</h2>
+
+        {% set journal = workspace.journal %}
+
+        {% if journal %}
+            {% set design = journal.design or {} %}
+
+            <div class="home-journal-layout">
+
+                <div class="home-book"
+                     style="--book-color: {{ design.get('cover_color', '#594536') }};
+                            --book-accent: {{ design.get('accent_color', '#c5ab85') }};">
+
+                    {% if design.get('emblem') == 'compass' %}
+                        <div class="home-book-emblem">✧</div>
+                    {% elif design.get('emblem') == 'tree' %}
+                        <div class="home-book-emblem">♧</div>
+                    {% elif design.get('emblem') == 'stars' %}
+                        <div class="home-book-emblem">✦</div>
+                    {% endif %}
+
+                    <div class="home-book-title">
+                        {{ journal.title }}
+                    </div>
+
                 </div>
 
-                <h1>{{ subject }}</h1>
+                <div class="home-journal-copy">
 
-                <p>
-                    Every life has a story.
-                    Preserve the experiences, perspectives
-                    and memories that make yours unique.
-                </p>
+                    <h3>{{ journal.title }}</h3>
 
-                <div class="hero-actions">
+                    {% if journal.entry_title %}
+                        <p>Last entry: {{ journal.entry_title }}</p>
+                    {% endif %}
+
+                    {% if journal.entry_date %}
+                        <p>
+                            {{ journal.entry_date.strftime('%B %d, %Y') }}
+                        </p>
+                    {% endif %}
+
+                    {% if journal.entry_status == 'draft' %}
+                        <p>Draft in progress</p>
+                    {% endif %}
 
                     <a href="{{ url_for('journal') }}"
                        class="legacy-button legacy-button-primary">
-
-                        {{ nav_icon("mic") }}
-                        Record a memory
-
-                    </a>
-
-                    <a href="{{ url_for('guidance') }}"
-                       class="legacy-button">
-
-                        {{ nav_icon("chat") }}
-                        Explore guidance
-
+                        Continue writing
                     </a>
 
                 </div>
+            </div>
 
-            </section>
+        {% else %}
 
+            <p class="legacy-muted">
+                Begin preserving the moments,
+                thoughts and experiences that matter to you.
+            </p>
 
-            <!-- Profile overview -->
+            <a href="{{ url_for('journal') }}"
+               class="legacy-button legacy-button-primary">
+                Begin your journal
+            </a>
 
-            <section class="dashboard-stats"
-                     aria-label="Profile overview">
+        {% endif %}
 
-                <div class="dashboard-stat">
+    </section>
 
-                    <div class="stat-value">
-                        {{ entry_count }}
-                    </div>
+    <section class="home-panel">
 
-                    <div class="stat-label">
-                        Interview entries
-                    </div>
+        <div class="legacy-eyebrow">Your evolving identity</div>
+        <h2>A developing portrait</h2>
+
+        <svg class="home-radar"
+             viewBox="0 0 360 280"
+             role="img"
+             aria-label="Identity documentation radar">
+
+            {% for ring in workspace.radar.rings %}
+                <polygon points="{{ ring }}"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-opacity=".16"/>
+            {% endfor %}
+
+            <polygon points="{{ workspace.radar.shape }}"
+                     fill="#c5ab85"
+                     fill-opacity=".22"
+                     stroke="#c5ab85"
+                     stroke-width="2"/>
+
+            {% for label in workspace.radar.labels %}
+                <text x="{{ label.x }}"
+                      y="{{ label.y }}"
+                      fill="currentColor"
+                      font-size="11"
+                      text-anchor="middle">
+                    {{ label.name }}
+                </text>
+            {% endfor %}
+
+        </svg>
+
+        <div class="home-identity-footer">
+            <a href="{{ url_for('identity') }}"
+               class="home-link">
+                Explore your identity →
+            </a>
+        </div>
+
+    </section>
+
+    <section class="home-panel">
+
+        <div class="home-panel-heading">
+            <h2>Discoveries</h2>
+            <a href="{{ url_for('identity') }}"
+               class="home-link">Explore more →</a>
+        </div>
+
+        {% for item in workspace.discoveries %}
+
+            <article class="home-discovery">
+
+                <div class="home-discovery-category">
+                    {{ item.dimension }}
+                </div>
+
+                <p>{{ item.text }}</p>
+
+                <div class="home-discovery-source">
+                    {{ item.type }} · {{ item.source }}
+                </div>
+
+            </article>
+
+        {% else %}
+
+            <p class="legacy-muted">
+                Insights will appear here as Legacy learns
+                from your authorized memories.
+            </p>
+
+        {% endfor %}
+
+    </section>
+
+    <section class="home-panel">
+
+        <div class="home-panel-heading">
+            <h2>Recent activity</h2>
+            <a href="{{ url_for('archive') }}"
+               class="home-link">View archive →</a>
+        </div>
+
+        {% for item in workspace.activity %}
+
+            <div class="home-activity">
+
+                <div class="home-activity-icon">
+                    {{ nav_icon("book") }}
+                </div>
+
+                <div class="home-activity-copy">
+
+                    {% if item.journal_id %}
+                        <a class="home-activity-link"
+                           href="{{ url_for(
+                               'journal',
+                               journal_id=item.journal_id,
+                               entry_id=item.entry_id,
+                               resume='1'
+                           ) }}">
+                            {{ item.title }}
+                        </a>
+                    {% else %}
+                        {{ item.title }}
+                    {% endif %}
+
+                    <small>
+                        {{ item.activity_type }}
+                        · {{ item.activity_date.strftime('%b %d, %Y') }}
+                    </small>
 
                 </div>
 
-                <div class="dashboard-stat">
+            </div>
 
-                    <div class="stat-value">
+        {% else %}
 
-                        {% if consent.has_consent %}
-                            Enabled
-                        {% else %}
-                            Pending
-                        {% endif %}
+            <p class="legacy-muted">
+                Your recent writing and archived material
+                will appear here.
+            </p>
 
-                    </div>
+        {% endfor %}
 
-                    <div class="stat-label">
-                        Recording consent
-                    </div>
+    </section>
 
-                </div>
+</div>
 
-            </section>
-
-
-            <!-- Voice journal -->
-
-            <section class="legacy-card">
-
-    <h2 class="legacy-card-title">
-        Your journal
-    </h2>
-
-    <p class="legacy-muted">
-        Preserve a thought, tell a story,
-        or reflect on your day.
-    </p>
-
-    <a href="{{ url_for('journal') }}"
-       class="legacy-button legacy-button-primary">
-        Open journal
-    </a>
-
-</section>
-
-
-            <!-- Guided reflections -->
-
-            <section class="legacy-card">
-
-    <h2 class="legacy-card-title">
-        Your identity
-    </h2>
-
-    <p class="legacy-muted">
-        A developing portrait of who you are,
-        shaped by your experiences and reflections.
-    </p>
-
-    <a href="{{ url_for('identity') }}"
-       class="legacy-button legacy-button-primary">
-        Explore identity
-    </a>
-
-</section>
-
-
-            <!-- Archive -->
-
-            <section class="legacy-card">
-
-    <h2 class="legacy-card-title">
-        Your archive
-    </h2>
-
-    <p class="legacy-muted">
-        Preserve personal documents and the
-        records that tell your story.
-    </p>
-
-    <a href="{{ url_for('archive') }}"
-       class="legacy-button legacy-button-primary">
-        Open archive
-    </a>
-
-</section>
-
-
-            <!-- Consent and settings -->
-
-
-
-
-            <footer class="dashboard-footer">
-                Legacy — A life worth remembering.
-            </footer>
+<footer class="home-footer">
+    Legacy — A life worth remembering.
+</footer>
 
 {% endblock %}

@@ -1,0 +1,365 @@
+<style>
+.personality-workspace {
+    --psych-gold: #c5ab85;
+    --psych-muted: #92969e;
+    margin: 24px 0 36px;
+    color: #e8e5df;
+}
+.psych-intro {
+    margin-bottom: 24px;
+}
+.psych-intro h2 {
+    font-size: 27px;
+    font-weight: 500;
+    margin: 0 0 8px;
+}
+.psych-description {
+    color: #b0b3ba;
+    font-size: 14px;
+    line-height: 1.7;
+}
+.psych-progress {
+    background: #191c20;
+    border: 1px solid #30343a;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 28px;
+}
+.psych-progress-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 12px;
+}
+.psych-track {
+    background: #30343a;
+    height: 5px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.psych-fill {
+    background: #c5ab85;
+    height: 100%;
+    border-radius: 8px;
+}
+.psych-group {
+    border: 1px solid #30343a;
+    background: #191c20;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.psych-group > summary {
+    cursor: pointer;
+    padding: 20px;
+    font-size: 17px;
+    font-weight: 500;
+    color: #d8c19f;
+}
+.psych-trait-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    padding: 0 18px 18px;
+}
+.psych-trait {
+    background: #101215;
+    border: 1px solid #30343a;
+    border-radius: 10px;
+    padding: 18px;
+}
+.psych-trait-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+}
+.psych-trait-name {
+    font-size: 15px;
+    font-weight: 600;
+}
+.psych-score {
+    color: #d8c19f;
+    font-size: 23px;
+    font-variant-numeric: tabular-nums;
+}
+.psych-unassessed {
+    color: #92969e;
+    font-size: 12px;
+}
+.psych-scale {
+    height: 5px;
+    background: #30343a;
+    border-radius: 8px;
+    margin: 18px 0 8px;
+    position: relative;
+}
+.psych-scale:before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    height: 5px;
+    width: 1px;
+    background: #92969e;
+}
+.psych-marker {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #c5ab85;
+    top: -3.5px;
+    transform: translateX(-50%);
+}
+.psych-anchors {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    color: #92969e;
+    font-size: 11px;
+    line-height: 1.5;
+}
+.psych-anchors span {
+    flex: 1;
+}
+.psych-anchors span:last-child {
+    text-align: right;
+}
+.psych-evidence {
+    color: #b0b3ba;
+    font-size: 12px;
+    margin-top: 14px;
+}
+.psych-interpretation {
+    font-size: 14px;
+    line-height: 1.7;
+    margin-top: 14px;
+}
+.psych-detail {
+    margin-top: 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #b0b3ba;
+}
+.psych-detail summary {
+    color: #c5ab85;
+    cursor: pointer;
+}
+.psych-formulation {
+    background: #191c20;
+    border: 1px solid #30343a;
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 14px;
+}
+.psych-formulation h3 {
+    color: #d8c19f;
+    margin: 0 0 12px;
+    font-size: 17px;
+}
+.psych-section-title {
+    font-size: 22px;
+    font-weight: 500;
+    margin: 32px 0 18px;
+}
+@media (max-width: 760px) {
+    .psych-trait-grid {
+        grid-template-columns: 1fr;
+    }
+    .psych-progress-header {
+        flex-wrap: wrap;
+    }
+}
+</style>
+
+<section class="personality-workspace">
+
+    <header class="psych-intro">
+        <h2>Psychological Portrait</h2>
+        <p class="psych-description">
+            An evolving understanding of your personality,
+            character, emotional makeup and psychological
+            patterns, developed through your life experiences.
+        </p>
+    </header>
+
+    <div class="psych-progress">
+
+        <div class="psych-progress-header">
+            <strong>
+                {% if personality.status == "ready" %}
+                    Psychological assessment available
+                {% elif personality.status == "private" %}
+                    Psychological learning paused
+                {% else %}
+                    Developing your psychological model
+                {% endif %}
+            </strong>
+
+            <span class="psych-evidence">
+                {{ personality.analyzed_memories }}
+                of {{ personality.total_memories }}
+                memories analyzed
+            </span>
+        </div>
+
+        <div class="psych-track">
+            <div class="psych-fill"
+                 style="width: {{ personality.progress }}%">
+            </div>
+        </div>
+
+        <p class="psych-description">
+            {{ personality.scored_traits }} of 45
+            psychological traits currently assessed.
+            Expression scores are evidence-based estimates,
+            not standardized test results.
+        </p>
+
+    </div>
+
+    {% include "personality_radar.html" %}
+
+    {% for group in personality.groups %}
+
+    <details class="psych-group"
+             {% if loop.first %}open{% endif %}>
+
+        <summary>{{ group.label }}</summary>
+
+        <div class="psych-trait-grid">
+
+            {% for trait in group.traits %}
+
+            <article class="psych-trait"
+                     id="psych-trait-{{ trait.key }}">
+
+                <div class="psych-trait-header">
+
+                    <span class="psych-trait-name">
+                        {{ trait.label }}
+                    </span>
+
+                    {% if trait.score is not none %}
+                    <span class="psych-score">
+                        {{ trait.score | round | int }}
+                    </span>
+                    {% else %}
+                    <span class="psych-unassessed">
+                        Insufficient evidence
+                    </span>
+                    {% endif %}
+
+                </div>
+
+                <div class="psych-scale">
+                    {% if trait.score is not none %}
+                    <span class="psych-marker"
+                          style="left: {{ trait.score }}%">
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="psych-anchors">
+                    <span>{{ trait.low }}</span>
+                    <span>{{ trait.high }}</span>
+                </div>
+
+                {% if trait.interpretation %}
+
+                <p class="psych-interpretation">
+                    {{ trait.interpretation }}
+                </p>
+
+                <div class="psych-evidence">
+                    {{ trait.evidence_count }}
+                    distinct source passages
+
+                    {% if trait.confidence is not none %}
+                    · Confidence estimate:
+                    {{ trait.confidence | round | int }}/100
+                    {% endif %}
+                </div>
+
+                <details class="psych-detail">
+                    <summary>Explore assessment</summary>
+
+                    {% if trait.patterns %}
+                    <h4>Behavioral patterns</h4>
+                    <ul>
+                        {% for pattern in trait.patterns %}
+                        <li>{{ pattern }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    {% if trait.variations %}
+                    <h4>Contextual differences</h4>
+                    <ul>
+                        {% for variation in trait.variations %}
+                        <li>{{ variation }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    {% if trait.limitations %}
+                    <h4>Assessment limitations</h4>
+                    <p>{{ trait.limitations }}</p>
+                    {% endif %}
+
+                </details>
+
+                {% endif %}
+
+            </article>
+
+            {% endfor %}
+
+        </div>
+
+    </details>
+
+    {% endfor %}
+
+    <h2 class="psych-section-title">
+        Deep Psychological Formulation
+    </h2>
+
+    {% for formulation in personality.formulations %}
+
+    <article class="psych-formulation">
+
+        <h3>{{ formulation.label }}</h3>
+
+        <p class="psych-interpretation">
+            {{ formulation.interpretation }}
+        </p>
+
+        {% if formulation.alternative_explanations %}
+
+        <details class="psych-detail">
+            <summary>Alternative interpretations</summary>
+            <ul>
+                {% for explanation in
+                    formulation.alternative_explanations %}
+                <li>{{ explanation }}</li>
+                {% endfor %}
+            </ul>
+        </details>
+
+        {% endif %}
+
+    </article>
+
+    {% else %}
+
+    <div class="psych-formulation">
+        <p class="psych-description">
+            Deeper psychological interpretations will appear
+            as your memories are analyzed and synthesized.
+        </p>
+    </div>
+
+    {% endfor %}
+
+</section>

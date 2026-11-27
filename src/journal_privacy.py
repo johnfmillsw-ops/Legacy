@@ -396,6 +396,36 @@ def remove_indexed_knowledge(
             (entry_id,),
         )
 
+    # Invalidate generated summaries when indexed
+    # journal knowledge is removed or replaced.
+    # This runs inside the existing transaction.
+    if document_id:
+
+        cursor.execute(
+            """
+            UPDATE profiles
+            SET
+                profile_data = jsonb_set(
+                    jsonb_set(
+                        profile_data,
+                        '{core_summary}',
+                        '""'::jsonb,
+                        true
+                    ),
+                    '{core_summary_meta}',
+                    '{}'::jsonb,
+                    true
+                ),
+                updated_utc = NOW()
+            WHERE id = %s
+              AND owner_id = %s
+            """,
+            (
+                profile_id,
+                owner_id,
+            ),
+        )
+
     return {
         "entry_id": entry_id,
         "removed_document_id": document_id,

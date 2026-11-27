@@ -23,7 +23,8 @@ CATEGORIES = {
     "reflection",
 }
 
-MAX_MEMORIES_PER_CHUNK = 4
+EXTRACTION_VERSION = 2
+MAX_MEMORIES_PER_CHUNK = 8
 MAX_CHUNKS_PER_RUN = 5
 
 
@@ -518,6 +519,27 @@ def save_proposals(
                 existing.add(normalized)
                 inserted += 1
 
+            cursor.execute(
+                """
+                INSERT INTO memory_extraction_progress (
+                    chunk_id,
+                    extraction_version,
+                    memories_created
+                )
+                VALUES (%s, %s, %s)
+                ON CONFLICT (
+                    chunk_id,
+                    extraction_version
+                ) DO NOTHING
+                """,
+                (
+                    chunk["chunk_id"],
+                    EXTRACTION_VERSION,
+                    inserted,
+                ),
+            )
+
+
     return inserted
 
 
@@ -525,9 +547,9 @@ def extract_document_memories(
     profile_id,
     owner_id,
     document_id,
-    max_chunks=MAX_CHUNKS_PER_RUN,
+    max_chunks=None,
 ):
-    if max_chunks < 1:
+    if max_chunks is not None and max_chunks < 1:
         raise ValueError(
             "max_chunks must be at least 1."
         )
@@ -565,6 +587,30 @@ def extract_document_memories(
     total_rejected = 0
 
     for chunk in chunks:
+
+        with database_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT 1
+                    FROM memory_extraction_progress
+                    WHERE chunk_id = %s
+                      AND extraction_version = %s
+                    """,
+                    (
+                        chunk["chunk_id"],
+                        EXTRACTION_VERSION,
+                    ),
+                )
+
+                if cursor.fetchone():
+                    print(
+                        "Passage {} already completed.".format(
+                            chunk["chunk_index"] + 1
+                        )
+                    )
+                    continue
+
         print(
             "Processing passage {}...".format(
                 chunk["chunk_index"] + 1

@@ -486,7 +486,7 @@
 
 {% block scripts %}
 
-<script src="{{ url_for('static', filename='journal_editor.js', v='3') }}"></script>
+<script src="{{ url_for('static', filename='journal_editor.js', v='6') }}"></script>
 
 <script src="{{ url_for('static', filename='journal_designer.js') }}"></script>
 
@@ -1024,7 +1024,47 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     );
 
-    loadJournals();
+    async function initializeJournalWorkspace() {
+
+        await loadJournals();
+
+        const params = new URLSearchParams(
+            window.location.search
+        );
+
+        const journalId = params.get("journal_id");
+        const entryId = params.get("entry_id") || null;
+        const resume = params.get("resume") === "1";
+
+        if (!journalId) {
+            return;
+        }
+
+        await openJournal(journalId);
+
+        if (
+            resume &&
+            activeJournal &&
+            activeJournal.id === journalId &&
+            document.getElementById("openJournalEditor") &&
+            window.LegacyJournalEditor
+        ) {
+            await window.LegacyJournalEditor.open(
+                activeJournal,
+                entryId
+            );
+        }
+
+        // Prevent the editor from reopening unexpectedly
+        // when the page is refreshed.
+        window.history.replaceState(
+            null,
+            "",
+            window.location.pathname
+        );
+    }
+
+    initializeJournalWorkspace();
 
 });
 </script>

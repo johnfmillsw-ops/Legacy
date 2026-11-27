@@ -413,8 +413,19 @@ def identity():
 
     profile = load_or_create(record)
 
+    from identity_portrait import build_identity_portrait
+
+    portrait = build_identity_portrait(
+        record["id"],
+        current_user.id,
+    )
+
     return render_template(
         "identity.html",
+        personality=build_personality_view(
+            record["id"], current_user.id
+        ),
+        portrait=portrait,
         subject=record["display_name"],
         categories=list(QUESTIONS.keys()),
         consent=profile.get("consent", {}),
@@ -472,8 +483,16 @@ def dashboard():
 
     profile = load_or_create(record)
 
+    from home_workspace import build_home_workspace
+
+    workspace = build_home_workspace(
+        record["id"],
+        current_user.id,
+    )
+
     return render_template(
         "dashboard.html",
+        workspace=workspace,
         subject=record["display_name"],
         entry_count=len(
             profile.get("entries", [])
@@ -531,9 +550,71 @@ def set_consent():
         ),
     })
 
+    # Invalidate previously generated identity summaries.
+    profile["core_summary"] = ""
+    profile["core_summary_meta"] = {}
+
     save_profile(record, profile)
 
-    flash("Consent settings saved.")
+    from journal_privacy import synchronize_profile_journals
+    from journal_routes import index_pending_journal_entries
+
+    try:
+        synchronize_profile_journals(
+            record["id"],
+            current_user.id,
+        )
+
+        if has_consent and allow_remote:
+            from threading import Thread
+
+            profile_id = record["id"]
+            owner_id = current_user.id
+
+            def restore_journal_learning():
+                try:
+                    while True:
+                        result = index_pending_journal_entries(
+                            profile_id,
+                            owner_id,
+                            limit=10,
+                        )
+
+                        items = result.get("results", [])
+
+                        if not items:
+                            break
+
+                        if not all(
+                            item.get("status") == "indexed"
+                            for item in items
+                        ):
+                            break
+
+                        if len(items) < 10:
+                            break
+
+                except Exception:
+                    app.logger.exception(
+                        "Journal learning restoration failed."
+                    )
+
+            Thread(
+                target=restore_journal_learning,
+                daemon=True,
+            ).start()
+
+        flash("Consent settings saved.")
+
+    except Exception:
+        app.logger.exception(
+            "Journal consent synchronization failed."
+        )
+
+        flash(
+            "Consent settings saved, but journal "
+            "synchronization needs attention."
+        )
 
     return redirect(url_for("settings"))
 
@@ -1212,6 +1293,12 @@ def health():
 # --------------------------------------------------
 # Local development server
 # --------------------------------------------------
+
+from personality_view import build_personality_view
+from personality_service import start_background_service
+
+start_background_service()
+
 
 if __name__ == "__main__":
 

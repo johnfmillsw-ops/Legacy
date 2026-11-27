@@ -320,11 +320,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function displayEntry(entry) {
         queueMicrotask(refreshPrivacyControls);
+        queueMicrotask(refreshLearningStatus);
 
 
         clearTimeout(saveTimer);
 
         activeEntry = entry;
+        updatePrivacyBadge("checking");
 
         title.value = entry.title || "";
         content.value = entry.content || "";
@@ -647,6 +649,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setStatus("Opening journal...", "pending");
 
         dialog.showModal();
+        await refreshMasterAIConsent();
 
         try {
 
@@ -980,7 +983,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let privacySaving = false;
 
+    // MASTER AI CONSENT CONTROL
+
+    let masterAIEnabled = null;
+
+    async function refreshMasterAIConsent() {
+
+        masterAIEnabled = null;
+        refreshPrivacyControls();
+
+        try {
+
+            const result = await requestData(
+                apiUrl + "/ai-consent"
+            );
+
+            masterAIEnabled = result.ai_enabled === true;
+
+        } catch (error) {
+
+            masterAIEnabled = null;
+
+        }
+
+        refreshPrivacyControls();
+    }
+
+
+
     function refreshPrivacyControls() {
+
+        if (masterAIEnabled !== true) {
+
+            updatePrivacyBadge(
+                masterAIEnabled === false
+                    ? "private"
+                    : "checking"
+            );
+
+
+            journalPrivacyControl.value = "private";
+            entryPrivacyControl.value = "private";
+
+            journalPrivacyControl.disabled = true;
+            entryPrivacyControl.disabled = true;
+
+            privacyMessage.textContent =
+                masterAIEnabled === false
+                    ? "AI learning is disabled in your account settings."
+                    : "Checking account AI permissions...";
+
+            return;
+        }
+
+
 
         if (!activeJournal || !activeEntry) {
             journalPrivacyControl.disabled = true;
@@ -1023,6 +1079,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     async function updatePrivacy(scope, value) {
+
+        if (masterAIEnabled !== true) {
+            refreshPrivacyControls();
+            return;
+        }
+
+
 
         if (
             privacySaving ||
@@ -1143,8 +1206,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             privacySaving = false;
 
-            journalPrivacyControl.disabled = false;
-            entryPrivacyControl.disabled = false;
+            refreshPrivacyControls();
         }
     }
 
@@ -1163,6 +1225,202 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     );
 
+
+
+    // JOURNAL LEARNING STATUS
+
+
+    const privacyBadge = document.querySelector(
+        ".editor-private-label"
+    );
+
+    function updatePrivacyBadge(status) {
+
+        if (!privacyBadge) return;
+
+        const labels = {
+            private: "Private",
+            draft: "Draft",
+            processing: "Learning",
+            complete: "AI Integrated",
+            retry_required: "AI Pending",
+            checking: "Checking...",
+            unavailable: "Status unavailable"
+        };
+
+        privacyBadge.textContent =
+            labels[status] || "Checking...";
+
+        privacyBadge.dataset.learningStatus = status;
+    }
+
+    const learningPanel = document.createElement("div");
+    learningPanel.style.marginTop = "12px";
+    learningPanel.style.padding = "12px";
+    learningPanel.style.border = "1px solid currentColor";
+    learningPanel.style.borderRadius = "8px";
+
+    const learningText = document.createElement("div");
+    learningText.setAttribute("role", "status");
+
+    const learningDetail = document.createElement("p");
+    learningDetail.style.fontSize = "0.85rem";
+    learningDetail.style.marginTop = "6px";
+
+    const retryLearning = document.createElement("button");
+    retryLearning.type = "button";
+    retryLearning.textContent = "Retry AI learning";
+    retryLearning.hidden = true;
+    retryLearning.style.marginTop = "8px";
+
+    learningPanel.append(
+        learningText,
+        learningDetail,
+        retryLearning
+    );
+
+    privacyMessage.insertAdjacentElement(
+        "afterend", learningPanel
+    );
+
+    let learningRequest = false;
+    let learningRetry = false;
+
+    async function refreshLearningStatus() {
+
+        if (!dialog.open || !activeEntry) {
+            learningPanel.hidden = true;
+            return;
+        }
+
+        if (learningRequest || learningRetry) {
+            return;
+        }
+
+        learningPanel.hidden = false;
+
+        if (dirty || savePromise || privacySaving) {
+            learningText.textContent = "Saving changes";
+            learningDetail.textContent = "";
+            retryLearning.hidden = true;
+            return;
+        }
+
+        const entryId = activeEntry.id;
+        learningRequest = true;
+
+        try {
+
+            const data = await requestData(
+                entryUrl(entryId) + "/learning"
+            );
+
+            if (
+                !dialog.open ||
+                !activeEntry ||
+                activeEntry.id !== entryId ||
+                dirty ||
+                savePromise ||
+                privacySaving
+            ) {
+                return;
+            }
+
+            const states = {
+                private: [
+                    "Private",
+                    "This entry is not currently available for AI learning."
+                ],
+                draft: [
+                    "Draft",
+                    "Finish this entry to begin authorized AI learning."
+                ],
+                processing: [
+                    "Learning...",
+                    "Legacy is extracting memories from your writing."
+                ],
+                complete: [
+                    "Integrated into Legacy",
+                    data.memory_count + " active memories. Your writing is searchable."
+                ],
+                retry_required: [
+                    "Processing incomplete",
+                    data.searchable
+                        ? "Your writing is searchable. Memory extraction can be retried."
+                        : "Your writing is saved. AI processing can be retried."
+                ]
+            };
+
+            const state = states[data.status] || [
+                "Status unavailable", ""
+            ];
+
+            updatePrivacyBadge(data.status);
+            learningText.textContent = state[0];
+            learningDetail.textContent = state[1];
+
+            retryLearning.hidden =
+                data.status !== "retry_required";
+
+        } catch (error) {
+
+            if (
+                activeEntry &&
+                activeEntry.id === entryId
+            ) {
+                updatePrivacyBadge("unavailable");
+                learningText.textContent =
+                    "Unable to check learning status";
+                learningDetail.textContent =
+                    "Your journal entry remains saved.";
+                retryLearning.hidden = true;
+            }
+
+        } finally {
+            learningRequest = false;
+        }
+    }
+
+    retryLearning.addEventListener("click", async () => {
+
+        if (
+            !activeEntry ||
+            learningRetry ||
+            busy ||
+            privacySaving ||
+            dirty ||
+            savePromise
+        ) {
+            return;
+        }
+
+        learningRetry = true;
+        retryLearning.disabled = true;
+
+        learningText.textContent = "Starting AI learning...";
+        learningDetail.textContent = "";
+
+        try {
+            await requestData(
+                entryUrl(activeEntry.id) + "/index",
+                {
+                    method: "POST",
+                    body: postBody()
+                }
+            );
+        } catch (error) {
+            learningText.textContent = "Processing incomplete";
+            learningDetail.textContent = error.message;
+        } finally {
+            learningRetry = false;
+            retryLearning.disabled = false;
+            await refreshLearningStatus();
+        }
+    });
+
+    learningPanel.hidden = true;
+
+    setInterval(refreshLearningStatus, 3000);
 
     window.LegacyJournalEditor = {
         open: openEditor
