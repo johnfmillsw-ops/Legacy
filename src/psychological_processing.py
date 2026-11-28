@@ -21,7 +21,7 @@ from psychological_analysis import (
 )
 
 from journal_privacy import (
-    load_entry_privacy,
+    load_entries_privacy,
     entry_is_eligible,
 )
 
@@ -99,7 +99,22 @@ def authorized_memories(
 
     rows = cursor.fetchall()
     authorized = []
-    entry_privacy_cache = {}
+    entry_ids = {
+        metadata["journal_entry_id"]
+        for row in rows
+        for metadata in [row["metadata"] or {}]
+        if metadata.get("origin") == "written_journal"
+        and isinstance(metadata.get("journal_entry_id"), str)
+        and metadata["journal_entry_id"]
+    }
+
+    entry_privacy_cache = load_entries_privacy(
+        cursor,
+        sorted(entry_ids),
+        profile_id,
+        owner_id,
+        lock=True,
+    )
 
     for row in rows:
 
@@ -109,21 +124,15 @@ def authorized_memories(
 
             entry_id = metadata.get("journal_entry_id")
 
-            if not entry_id:
+            if not isinstance(entry_id, str) or not entry_id:
                 continue
 
             try:
 
-                if entry_id not in entry_privacy_cache:
-                    entry_privacy_cache[entry_id] = load_entry_privacy(
-                        cursor,
-                        entry_id,
-                        profile_id,
-                        owner_id,
-                        lock=True,
-                    )
+                entry = entry_privacy_cache.get(entry_id)
 
-                entry = entry_privacy_cache[entry_id]
+                if entry is None:
+                    continue
 
                 if not (
                     entry_is_eligible(entry)

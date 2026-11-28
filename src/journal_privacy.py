@@ -160,6 +160,55 @@ def load_entry_privacy(
     return entry
 
 
+
+def load_entries_privacy(
+    cursor,
+    entry_ids,
+    profile_id,
+    owner_id,
+    lock=False,
+):
+    """Load multiple journal entries with ownership verification."""
+
+    if not entry_ids:
+        return {}
+
+    query = """
+        SELECT
+            e.id,
+            e.journal_id,
+            e.status,
+            e.ai_preference,
+            e.allow_ai_processing,
+            e.document_id,
+            j.ai_default_enabled,
+            j.profile_id,
+            p.profile_data
+        FROM journal_entries e
+        JOIN journals j
+            ON j.id = e.journal_id
+        JOIN profiles p
+            ON p.id = j.profile_id
+        WHERE e.id = ANY(%s)
+          AND j.profile_id = %s
+          AND p.owner_id = %s
+        ORDER BY e.id
+    """
+
+    if lock:
+        query += " FOR UPDATE OF j, e"
+
+    cursor.execute(
+        query,
+        (list(entry_ids), profile_id, owner_id),
+    )
+
+    return {
+        entry["id"]: entry
+        for entry in cursor.fetchall()
+    }
+
+
 def entry_is_eligible(entry):
     """
     Calculate permission from the current
