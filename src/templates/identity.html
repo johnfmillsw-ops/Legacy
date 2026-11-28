@@ -296,6 +296,25 @@
 </header>
 
 
+
+<section class="legacy-card"
+         aria-label="Personality questionnaire">
+    <div class="legacy-eyebrow">Personality baseline</div>
+    <h2 style="font-family:var(--font-heading);
+               font-weight:400;margin:8px 0 12px">
+        Begin your personality assessment
+    </h2>
+    <p class="legacy-muted">
+        A 50-question assessment that establishes
+        a baseline for your evolving personality model.
+        Your existing psychological insights are preserved.
+    </p>
+    <a class="legacy-button legacy-button-primary"
+       href="{{ url_for('personality_baseline_page') }}">
+        Open personality assessment
+    </a>
+</section>
+
 {% include "personality_panel.html" %}
 
 <script id="identityPortraitData" type="application/json">

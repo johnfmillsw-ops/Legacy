@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% set active_page = "identity" %}
+
+{% block title %}Legacy — Personality Assessment{% endblock %}
+
+{% block head %}
+<style>
+.baseline-shell {
+    max-width: 820px;
+    margin: 0 auto;
+}
+.baseline-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: clamp(20px, 4vw, 40px);
+}
+.baseline-card h2 {
+    font-family: var(--font-heading);
+    font-size: clamp(25px, 4vw, 34px);
+    font-weight: 400;
+    margin-bottom: 14px;
+}
+.baseline-subtle {
+    color: var(--text-secondary);
+    line-height: 1.75;
+}
+.baseline-progress-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+.baseline-progress {
+    height: 7px;
+    background: var(--surface-raised);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+.baseline-progress-fill {
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+    transition: width .2s ease;
+}
+.baseline-question {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    font-size: clamp(23px, 4vw, 32px);
+    margin: 0 0 28px;
+    line-height: 1.4;
+}
+.baseline-options {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 26px;
+}
+.baseline-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--background);
+    cursor: pointer;
+}
+.baseline-option:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--surface-raised);
+}
+.baseline-option input {
+    accent-color: var(--accent);
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+}
+.baseline-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 24px;
+}
+.baseline-score {
+    margin-top: 18px;
+}
+.baseline-score-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 7px;
+}
+.baseline-score-track {
+    background: var(--surface-raised);
+    border-radius: 8px;
+    height: 8px;
+    overflow: hidden;
+}
+.baseline-score-fill {
+    background: var(--accent);
+    height: 100%;
+}
+.baseline-error {
+    color: var(--danger);
+    margin-top: 18px;
+}
+.baseline-status {
+    color: var(--text-secondary);
+    margin-top: 14px;
+    font-size: 13px;
+}
+.baseline-shell [hidden] {
+    display: none !important;
+}
+@media (max-width: 480px) {
+    .baseline-actions .legacy-button {
+        flex: 1 1 auto;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="baseline-shell"
+     id="baselineApp"
+     data-api="/api/personality/baseline"
+     data-identity="{{ url_for('identity') }}">
+
+    <header class="legacy-page-header">
+        <div class="legacy-eyebrow">Identity / Assessment</div>
+        <h1 class="legacy-page-title">
+            Personality Assessment
+        </h1>
+        <p class="legacy-page-description">
+            Establish a starting point for your evolving
+            psychological portrait.
+        </p>
+    </header>
+
+    <input type="hidden"
+           id="baselineCsrf"
+           value="{{ csrf_token() }}">
+
+    <section class="baseline-card" id="baselineWelcome">
+        <h2>Understanding your personality</h2>
+        <p class="baseline-subtle">
+            This questionnaire contains 50 statements.
+            Consider how accurately each describes you
+            in general, rather than how you feel today.
+        </p>
+        <p class="baseline-subtle">
+            You can save your progress and return later.
+            Your answers will be stored in your selected
+            Legacy profile.
+        </p>
+        <p class="baseline-subtle">
+            These questionnaire scores provide a baseline.
+            Legacy's existing memory analysis remains
+            separate until the unified scoring system
+            is implemented. The results are not a diagnosis
+            or a clinical evaluation.
+        </p>
+
+        <button id="baselineStart"
+                type="button"
+                class="legacy-button legacy-button-primary"
+                disabled>
+            Start or resume assessment
+        </button>
+
+        <p id="baselinePrevious" class="baseline-status"></p>
+    </section>
+
+    <section class="baseline-card"
+             id="baselineQuestions"
+             hidden>
+        <div class="baseline-progress-head">
+            <span id="baselineQuestionCount"></span>
+            <span id="baselineAnsweredCount"></span>
+        </div>
+
+        <div class="baseline-progress"
+             role="progressbar"
+             aria-label="Questions answered"
+             aria-valuemin="0"
+             aria-valuemax="50"
+             aria-valuenow="0"
+             id="baselineProgress">
+            <div class="baseline-progress-fill"
+                 id="baselineProgressFill"></div>
+        </div>
+
+        <fieldset style="border:0;padding:0;margin:0;min-width:0">
+            <legend class="baseline-question"
+                    id="baselineQuestionText"></legend>
+            <div id="baselineOptions"
+                 class="baseline-options"></div>
+        </fieldset>
+
+        <div class="baseline-actions">
+            <button type="button"
+                    class="legacy-button"
+                    id="baselineBack">
+                Previous
+            </button>
+            <button type="button"
+                    class="legacy-button legacy-button-primary"
+                    id="baselineNext">
+                Next question
+            </button>
+            <button type="button"
+                    class="legacy-button legacy-button-primary"
+                    id="baselineFinish"
+                    hidden>
+                Complete assessment
+            </button>
+            <button type="button"
+                    class="legacy-button"
+                    id="baselineSaveExit">
+                Save and exit
+            </button>
+        </div>
+
+        <p id="baselineSaveStatus"
+           class="baseline-status"
+           role="status"></p>
+    </section>
+
+    <section class="baseline-card"
+             id="baselineResults"
+             hidden>
+        <h2>Your questionnaire baseline</h2>
+        <p class="baseline-subtle">
+            These five scores are normalized questionnaire
+            results, not the evolving Legacy personality
+            model. Higher scores indicate stronger
+            expression of the corresponding dimension.
+        </p>
+        <div id="baselineScores"></div>
+
+        <div class="baseline-actions">
+            <a class="legacy-button legacy-button-primary"
+               href="{{ url_for('identity') }}">
+                Return to Identity
+            </a>
+            <button class="legacy-button"
+                    type="button"
+                    id="baselineRetake">
+                Take assessment again
+            </button>
+        </div>
+    </section>
+
+    <p id="baselineError"
+       class="baseline-error"
+       role="alert"
+       hidden></p>
+    <p id="baselineGlobalStatus"
+       class="baseline-status"
+       role="status">
+        Loading assessment...
+    </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script defer
+        src="{{ url_for('static', filename='personality_baseline.js') }}">
+</script>
+{% endblock %}

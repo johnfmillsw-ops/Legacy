@@ -17,6 +17,8 @@ from personality_storage import (
 
 from personality_analysis import source_hash
 
+from personality_unified_storage import load_unified_personality
+
 
 def build_personality_view(profile_id, owner_id):
 
@@ -33,6 +35,11 @@ def build_personality_view(profile_id, owner_id):
 
     with database_connection() as conn:
         with conn.cursor() as cur:
+
+            cur.execute(
+                "SET TRANSACTION ISOLATION LEVEL "
+                "REPEATABLE READ READ WRITE"
+            )
 
             try:
                 sources = load_authorized_sources(
@@ -152,6 +159,19 @@ def build_personality_view(profile_id, owner_id):
             elif sources:
                 result["status"] = "developing"
 
+            try:
+                unified = load_unified_personality(
+                    cur,
+                    profile_id,
+                    owner_id,
+                )
+            except PermissionError:
+                unified = {
+                    "baseline_completed": False,
+                    "valid_evidence_count": 0,
+                    "scores": {},
+                }
+
     for group, definitions in TRAIT_GROUPS.items():
 
         items = []
@@ -212,6 +232,73 @@ def build_personality_view(profile_id, owner_id):
         )
         if result["total_memories"]
         else 0
+    )
+
+
+    # The five core scores have exactly one source of
+    # truth. All remaining psychological interpretations
+    # and formulations retain their existing storage.
+
+    result["unified"] = unified
+
+    # A completed local questionnaire remains available
+    # independently of remote psychological processing.
+    if unified["baseline_completed"]:
+
+        if result["status"] == "ready":
+            result["status"] = "integrated_ready"
+        else:
+            result["status"] = "baseline_ready"
+
+
+    for group in result["groups"]:
+
+        if group["key"] != "core_personality":
+            continue
+
+        for trait in group["traits"]:
+
+            calculated = unified["scores"].get(
+                trait["key"]
+            )
+
+            # Preserve historical synthesis metadata
+            # separately from the current unified estimate.
+            trait["previous_synthesis_confidence"] = (
+                trait.get("confidence")
+            )
+            trait["previous_synthesis_evidence_count"] = (
+                trait.get("evidence_count", 0)
+            )
+
+            # Unified confidence has not been calibrated.
+            trait["confidence"] = None
+            trait["evidence_count"] = (
+                calculated["independent_evidence_count"]
+                if calculated is not None
+                else 0
+            )
+
+            if calculated is None:
+                trait["score"] = None
+                trait["method"] = "insufficient_evidence"
+                trait["baseline_influence"] = None
+                trait["independent_evidence_count"] = 0
+                continue
+
+            trait["score"] = calculated["score"]
+            trait["method"] = calculated["method"]
+            trait["baseline_influence"] = (
+                calculated["baseline_influence"]
+            )
+            trait["independent_evidence_count"] = (
+                calculated["independent_evidence_count"]
+            )
+
+    result["scored_traits"] = sum(
+        trait["score"] is not None
+        for group in result["groups"]
+        for trait in group["traits"]
     )
 
     return result

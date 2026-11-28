@@ -115,6 +115,11 @@ from archive_timeline import timeline_bp
 
 app.register_blueprint(timeline_bp)
 
+from personality_baseline_routes import baseline_bp
+
+app.register_blueprint(baseline_bp)
+
+
 
 
 
@@ -535,6 +540,31 @@ def dashboard():
             "core_summary_meta",
             {},
         ),
+    )
+
+
+
+@app.route("/identity/assessment")
+@login_required
+def personality_baseline_page():
+
+    record = active_profile()
+
+    if record is None:
+        return redirect(url_for("index"))
+
+    profile = load_or_create(record)
+
+    if not local_processing_allowed(profile):
+        flash(
+            "Enable local processing consent before "
+            "starting your personality assessment."
+        )
+        return redirect(url_for("settings"))
+
+    return render_template(
+        "personality_baseline.html",
+        subject=record["display_name"],
     )
 
 
