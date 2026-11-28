@@ -446,19 +446,11 @@ def identity():
 
     profile = load_or_create(record)
 
-    from identity_portrait import build_identity_portrait
-
-    portrait = build_identity_portrait(
-        record["id"],
-        current_user.id,
-    )
-
     return render_template(
         "identity.html",
         personality=build_personality_view(
             record["id"], current_user.id
         ),
-        portrait=portrait,
         subject=record["display_name"],
         categories=list(QUESTIONS.keys()),
         consent=profile.get("consent", {}),
