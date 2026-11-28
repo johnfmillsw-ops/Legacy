@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from uuid import uuid4, uuid5, NAMESPACE_URL
 
 import psycopg
+from psycopg_pool import ConnectionPool
+from threading import Lock
 
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
@@ -25,15 +27,28 @@ DATABASE_URL = os.getenv(
 # Database connection
 # --------------------------------------------------
 
+_pool = ConnectionPool(
+    conninfo=DATABASE_URL,
+    kwargs={
+        "row_factory": dict_row,
+        "connect_timeout": 10,
+    },
+    min_size=1,
+    max_size=6,
+    timeout=10,
+    open=False,
+)
+
+_pool_lock = Lock()
+
+
 @contextmanager
 def database_connection():
+    with _pool_lock:
+        if _pool.closed:
+            _pool.open()
 
-    with psycopg.connect(
-        DATABASE_URL,
-        row_factory=dict_row,
-        connect_timeout=10,
-    ) as connection:
-
+    with _pool.connection() as connection:
         yield connection
 
 
