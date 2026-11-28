@@ -164,6 +164,7 @@ def build_personality_view(profile_id, owner_id):
                     cur,
                     profile_id,
                     owner_id,
+                    authorized_sources=sources,
                 )
             except PermissionError:
                 unified = {

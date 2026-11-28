@@ -146,6 +146,8 @@ def load_unified_personality(
     cur,
     profile_id,
     owner_id,
+    *,
+    authorized_sources=None,
 ):
 
     cur.execute("""
@@ -202,11 +204,14 @@ def load_unified_personality(
 
     if consent.get("allow_remote_processing") is True:
 
-        sources = load_authorized_sources(
-            cur,
-            profile_id,
-            owner_id,
-        )
+        sources = authorized_sources
+
+        if sources is None:
+            sources = load_authorized_sources(
+                cur,
+                profile_id,
+                owner_id,
+            )
 
         cur.execute("""
             SELECT
