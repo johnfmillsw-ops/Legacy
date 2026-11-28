@@ -301,6 +301,7 @@ def generate_guidance_llm(
     baseline_principles: List[str],
     evidence: List[Dict[str, Any]],
     profile: Dict[str, Any],
+    cognitive_context: str = "",
 ) -> str:
 
     baseline_text = "\n".join(
@@ -447,6 +448,10 @@ RECORDED GUIDANCE PRINCIPLES
 
 {baseline_text}
 
+COGNITIVE ASSESSMENT CONTEXT
+
+{cognitive_context}
+
 RESPONSE GUIDANCE
 
 Answer the question using the strongest relevant
@@ -474,6 +479,10 @@ End when the answer feels complete.
         core_summary=core_summary,
         identity_anchor=identity_anchor,
         recent_text=recent_text,
+        cognitive_context=(
+            cognitive_context
+            or "No authorized cognitive assessment available."
+        ),
         baseline_text=(
             baseline_text
             or "No additional principles recorded."

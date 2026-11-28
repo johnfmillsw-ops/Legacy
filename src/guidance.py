@@ -411,12 +411,29 @@ def generate_guidance_response(
         principles = []
 
     if USE_LLM:
+
+        from cognitive_model_context import (
+            build_cognitive_model_context,
+            format_cognitive_model_context,
+        )
+
+        cognitive_context = build_cognitive_model_context(
+            profile=profile,
+            profile_id=profile_id,
+            owner_id=owner_id,
+        )
+
+        cognitive_text = format_cognitive_model_context(
+            cognitive_context
+        )
+
         response_text = generate_guidance_llm(
             subject_name=subject,
             question=question,
             baseline_principles=principles,
             evidence=evidence,
             profile=profile,
+            cognitive_context=cognitive_text,
         )
 
         if not response_text:

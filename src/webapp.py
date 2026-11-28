@@ -119,6 +119,9 @@ from personality_baseline_routes import baseline_bp
 
 app.register_blueprint(baseline_bp)
 
+from cognitive_routes import cognitive_bp
+app.register_blueprint(cognitive_bp)
+
 
 
 
@@ -520,8 +523,17 @@ def dashboard():
         current_user.id,
     )
 
+    from cognitive_view import build_cognitive_view
+
+    cognitive = build_cognitive_view(
+        record["id"],
+        current_user.id,
+        "home",
+    )
+
     return render_template(
         "dashboard.html",
+        cognitive=cognitive,
         workspace=workspace,
         subject=record["display_name"],
         entry_count=len(
@@ -542,6 +554,39 @@ def dashboard():
         ),
     )
 
+
+
+@app.route("/identity/cognitive")
+@login_required
+def cognitive_assessment_page():
+
+    record = active_profile()
+
+    if record is None:
+        return redirect(url_for("index"))
+
+    profile = load_or_create(record)
+
+    if not local_processing_allowed(profile):
+        flash(
+            "Enable local processing consent before "
+            "starting your cognitive assessment."
+        )
+        return redirect(url_for("settings"))
+
+    from cognitive_view import build_cognitive_view
+
+    cognitive = build_cognitive_view(
+        record["id"],
+        current_user.id,
+        "cognitive_page",
+    )
+
+    return render_template(
+        "cognitive_assessment.html",
+        subject=record["display_name"],
+        cognitive=cognitive,
+    )
 
 
 @app.route("/identity/assessment")

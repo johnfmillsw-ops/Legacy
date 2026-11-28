@@ -315,7 +315,43 @@
     </a>
 </section>
 
+<section class="legacy-card"
+         aria-label="Cognitive Identity">
+
+    <div class="legacy-eyebrow">
+        Cognitive Identity
+    </div>
+
+    <h2 style="font-family:var(--font-heading);
+               font-weight:400;margin:8px 0 12px">
+        Understanding how you think
+    </h2>
+
+    <p class="legacy-muted">
+        Explore six areas of cognitive performance:
+        fluid reasoning, visual-spatial ability,
+        verbal comprehension, quantitative reasoning,
+        working memory and processing speed.
+    </p>
+
+    <p class="legacy-muted">
+        Your assessment results remain private unless
+        you explicitly enable display or integration
+        with your Legacy identity model.
+    </p>
+
+    <a class="legacy-button legacy-button-primary"
+       href="{{ url_for('cognitive_assessment_page') }}">
+        Open cognitive assessment
+    </a>
+
+</section>
+
 {% include "personality_panel.html" %}
+
+
+
+
 
 <script id="identityPortraitData" type="application/json">
     {{ portrait | tojson }}

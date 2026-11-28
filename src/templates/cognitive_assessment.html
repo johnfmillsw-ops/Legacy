@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+{% set active_page = "identity" %}
+
+{% block title %}Legacy — Cognitive Assessment{% endblock %}
+
+{% block head %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='cognitive.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div id="cognitiveApp"
+     class="cognitive-shell"
+     data-api="/api/cognitive"
+     data-identity="{{ url_for('identity') }}">
+
+    <input type="hidden"
+           id="cognitiveCsrf"
+           value="{{ csrf_token() }}">
+
+    <header class="legacy-page-header">
+        <div class="legacy-eyebrow">
+            Identity / Cognitive Identity
+        </div>
+
+        <h1 class="legacy-page-title">
+            Cognitive Assessment
+        </h1>
+
+        <p class="legacy-page-description">
+            Explore the structure of your cognitive abilities.
+        </p>
+    </header>
+
+    <section id="cognitiveWelcome"
+             class="cognitive-card">
+
+        <div class="legacy-eyebrow">
+            Cognitive Identity
+        </div>
+
+        <h2>Understanding how you think</h2>
+
+        {% if cognitive %}
+
+        <div class="cognitive-composite">
+
+            <span class="cognitive-muted">
+                {{ cognitive.label }}
+            </span>
+
+            <strong>{{ cognitive.score }}</strong>
+
+            <span class="cognitive-muted cognitive-small">
+                {{ cognitive.qualification }}
+            </span>
+
+        </div>
+
+        <div class="cognitive-domain-results">
+
+            {% for domain in cognitive.domains %}
+
+            <article class="cognitive-result-card">
+
+                <h3>{{ domain.label }}</h3>
+
+                {% if domain.score is not none %}
+
+                    <strong>{{ domain.score }}</strong>
+
+                    <p class="cognitive-muted cognitive-small">
+                        Theoretical domain estimate
+                    </p>
+
+                {% elif domain.correct_per_minute is not none %}
+
+                    <strong>
+                        {{ "%.2f"|format(domain.correct_per_minute) }}
+                    </strong>
+
+                    <p class="cognitive-muted cognitive-small">
+                        Correct responses per minute
+                    </p>
+
+                {% endif %}
+
+            </article>
+
+            {% endfor %}
+
+        </div>
+
+        {% endif %}
+
+
+
+        <p class="cognitive-muted">
+            This assessment examines six distinct areas
+            of cognitive performance. Your results can
+            contribute to a more comprehensive
+            representation of your identity.
+        </p>
+
+        <div class="cognitive-domain-grid">
+
+            <article>
+                <span>01</span>
+                <h3>Fluid Reasoning</h3>
+                <p>Pattern recognition and logical inference.</p>
+            </article>
+
+            <article>
+                <span>02</span>
+                <h3>Visual-Spatial Ability</h3>
+                <p>Mental rotation and spatial relationships.</p>
+            </article>
+
+            <article>
+                <span>03</span>
+                <h3>Verbal Comprehension</h3>
+                <p>Language, concepts and relationships.</p>
+            </article>
+
+            <article>
+                <span>04</span>
+                <h3>Quantitative Reasoning</h3>
+                <p>Numerical patterns and mathematical logic.</p>
+            </article>
+
+            <article>
+                <span>05</span>
+                <h3>Working Memory</h3>
+                <p>Retention and manipulation of information.</p>
+            </article>
+
+            <article>
+                <span>06</span>
+                <h3>Processing Speed</h3>
+                <p>Speed and accuracy of visual discrimination.</p>
+            </article>
+
+        </div>
+
+        <div class="cognitive-notice">
+
+            <h3>Before beginning</h3>
+
+            <ul>
+                <li>Allow approximately 60 minutes.</li>
+                <li>Use a quiet environment without distractions.</li>
+                <li>Do not use calculators, notes or outside assistance.</li>
+                <li>Keep the assessment window open and focused.</li>
+                <li>Memory exercises have controlled viewing periods.</li>
+                <li>Processing-speed sections have strict time limits.</li>
+                <li>Answers cannot be changed after submission.</li>
+            </ul>
+
+        </div>
+
+        <p class="cognitive-muted cognitive-small">
+            Legacy's cognitive assessment is experimental.
+            Numerical estimates use a theoretical scoring
+            model and are not clinically validated or
+            population-normed IQ scores.
+        </p>
+
+        <label class="cognitive-checkbox">
+            <input type="checkbox"
+                   id="cognitiveAcknowledgement">
+            I understand the assessment instructions
+            and limitations.
+        </label>
+
+        <div class="cognitive-actions">
+
+            <button type="button"
+                    id="cognitiveStart"
+                    class="legacy-button legacy-button-primary"
+                    disabled>
+                Begin assessment
+            </button>
+
+            <a href="{{ url_for('identity') }}"
+               class="legacy-button">
+                Return to Identity
+            </a>
+
+        </div>
+
+    </section>
+
+    <section id="cognitiveHistory"
+             class="cognitive-card">
+
+        <h2>Assessment history</h2>
+
+        <p class="cognitive-muted">
+            Your previous assessments are stored privately
+            within your selected profile.
+        </p>
+
+        <div id="cognitiveHistoryList">
+            Loading assessment history...
+        </div>
+
+    </section>
+
+    <section id="cognitiveAdministration"
+             class="cognitive-card"
+             hidden>
+
+        <div class="cognitive-progress-header">
+            <span id="cognitiveDomain"></span>
+            <span id="cognitiveProgressText"></span>
+        </div>
+
+        <progress id="cognitiveProgress"
+                  class="cognitive-progress"
+                  max="18"
+                  value="0">
+        </progress>
+
+        <div id="cognitiveTimer"
+             class="cognitive-timer"
+             hidden>
+            <span>Time remaining</span>
+            <strong id="cognitiveTimerValue">02:00</strong>
+        </div>
+
+        <div id="cognitiveBlockIntro" hidden>
+
+            <div class="legacy-eyebrow">
+                Next section
+            </div>
+
+            <h2 id="cognitiveBlockTitle"></h2>
+
+            <p id="cognitiveBlockInstructions"
+               class="cognitive-muted"></p>
+
+            <button type="button"
+                    id="cognitiveBeginBlock"
+                    class="legacy-button legacy-button-primary">
+                Begin section
+            </button>
+
+        </div>
+
+        <div id="cognitiveMemoryStage" hidden>
+
+            <div class="legacy-eyebrow">
+                Memorization
+            </div>
+
+            <div id="cognitiveMemoryStimulus"></div>
+
+            <progress id="cognitiveMemoryProgress"
+                      class="cognitive-progress"
+                      max="100"
+                      value="100">
+            </progress>
+
+            <p class="cognitive-muted">
+                The stimulus will disappear automatically.
+            </p>
+
+        </div>
+
+        <div id="cognitiveQuestionStage" hidden>
+
+            <h2 id="cognitivePrompt"
+                class="cognitive-question"></h2>
+
+            <div id="cognitiveStimulus"
+                 class="cognitive-stimulus"></div>
+
+            <div id="cognitiveOptions"
+                 class="cognitive-options"></div>
+
+            <div class="cognitive-actions">
+
+                <button type="button"
+                        id="cognitiveSubmit"
+                        class="legacy-button legacy-button-primary"
+                        disabled>
+                    Submit answer
+                </button>
+
+            </div>
+
+        </div>
+
+        <div id="cognitiveAnsweredStage" hidden>
+
+            <h2>Response recorded</h2>
+
+            <button type="button"
+                    id="cognitiveAdvance"
+                    class="legacy-button legacy-button-primary">
+                Continue
+            </button>
+
+        </div>
+
+        <div class="cognitive-administration-footer">
+
+            <button type="button"
+                    id="cognitiveInterrupt"
+                    class="legacy-button">
+                End assessment
+            </button>
+
+            <span id="cognitiveAdministrationStatus"
+                  class="cognitive-muted"
+                  role="status"></span>
+
+        </div>
+
+    </section>
+
+    <section id="cognitiveResults"
+             class="cognitive-card"
+             hidden>
+
+        <div class="legacy-eyebrow">
+            Cognitive Profile
+        </div>
+
+        <h2>Assessment results</h2>
+
+        <div class="cognitive-composite">
+
+            <span class="cognitive-muted">
+                Theoretical IQ-scale estimate
+            </span>
+
+            <strong id="cognitiveCompositeScore">—</strong>
+
+            <span class="cognitive-muted cognitive-small">
+                Experimental · Not population-normed
+            </span>
+
+        </div>
+
+        <div id="cognitiveDomainResults"
+             class="cognitive-domain-results"></div>
+
+        <div class="cognitive-notice">
+
+            <h3>Interpreting your results</h3>
+
+            <p>
+                These estimates reflect performance on
+                Legacy's assessment under its theoretical
+                scoring model. They do not establish a
+                clinical IQ, population percentile or
+                psychological diagnosis.
+            </p>
+
+            <p>
+                Processing speed is reported separately
+                from the composite estimate.
+            </p>
+
+        </div>
+
+        <div class="cognitive-privacy">
+
+            <h3>Privacy and integration</h3>
+
+            <p class="cognitive-muted">
+                Choose whether this assessment contributes
+                to your Legacy identity model or appears
+                elsewhere in your profile.
+            </p>
+
+            <label class="cognitive-checkbox">
+                <input type="checkbox"
+                       id="cognitiveModelIntegration">
+                Include this assessment in my AI identity model
+            </label>
+
+            <label class="cognitive-checkbox">
+                <input type="checkbox"
+                       id="cognitiveDisplayHome">
+                Display this assessment on my home page
+            </label>
+
+            <label class="cognitive-checkbox">
+                <input type="checkbox"
+                       id="cognitiveDisplayPage">
+                Display this assessment on my cognitive page
+            </label>
+
+            <div class="cognitive-actions">
+
+                <button type="button"
+                        id="cognitiveSavePreferences"
+                        class="legacy-button legacy-button-primary">
+                    Save preferences
+                </button>
+
+            </div>
+
+            <p id="cognitivePreferenceStatus"
+               class="cognitive-muted"
+               role="status"></p>
+
+        </div>
+
+        <div class="cognitive-actions">
+
+            <button type="button"
+                    id="cognitiveReturn"
+                    class="legacy-button">
+                Assessment history
+            </button>
+
+            <button type="button"
+                    id="cognitiveDelete"
+                    class="legacy-button cognitive-danger">
+                Delete assessment
+            </button>
+
+        </div>
+
+    </section>
+
+    <p id="cognitiveError"
+       class="cognitive-error"
+       role="alert"
+       hidden></p>
+
+    <p id="cognitiveGlobalStatus"
+       class="cognitive-muted"
+       role="status"></p>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script defer
+        src="{{ url_for('static', filename='cognitive_renderer.js') }}">
+</script>
+<script defer
+        src="{{ url_for('static', filename='cognitive_assessment.js') }}">
+</script>
+{% endblock %}

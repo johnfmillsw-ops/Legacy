@@ -348,6 +348,39 @@
 
         </svg>
 
+
+        {% if cognitive %}
+        <div style="border-top:1px solid var(--border);
+                    padding:20px 0;margin-top:12px">
+
+            <div class="legacy-eyebrow">
+                Cognitive Identity
+            </div>
+
+            <div style="font-family:var(--font-heading);
+                        font-size:48px;
+                        color:var(--accent);
+                        margin:8px 0">
+                {{ cognitive.score }}
+            </div>
+
+            <p class="legacy-muted">
+                {{ cognitive.label }}
+            </p>
+
+            <p class="legacy-muted"
+               style="font-size:12px">
+                {{ cognitive.qualification }}
+            </p>
+
+            <a class="home-link"
+               href="{{ url_for('cognitive_assessment_page') }}">
+                Explore cognitive profile
+            </a>
+
+        </div>
+        {% endif %}
+
         <div class="home-identity-footer">
             <a href="{{ url_for('identity') }}"
                class="home-link">
