@@ -99,6 +99,7 @@ def authorized_memories(
 
     rows = cursor.fetchall()
     authorized = []
+    entry_privacy_cache = {}
 
     for row in rows:
 
@@ -113,13 +114,16 @@ def authorized_memories(
 
             try:
 
-                entry = load_entry_privacy(
-                    cursor,
-                    entry_id,
-                    profile_id,
-                    owner_id,
-                    lock=True,
-                )
+                if entry_id not in entry_privacy_cache:
+                    entry_privacy_cache[entry_id] = load_entry_privacy(
+                        cursor,
+                        entry_id,
+                        profile_id,
+                        owner_id,
+                        lock=True,
+                    )
+
+                entry = entry_privacy_cache[entry_id]
 
                 if not (
                     entry_is_eligible(entry)
