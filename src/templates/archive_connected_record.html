@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Historical Record | Legacy{% endblock %}
+
+{% block head %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='archive.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='archive_connections.css') }}">
+{% endblock %}
+
+{% block content %}
+<main class="archive-world archive-reading-room">
+
+    <div class="archive-return-bar">
+
+        <a class="archive-action"
+           href="{{ url_for('archive', room='gallery') }}">
+            ← Back to Gallery
+        </a>
+
+        <a class="archive-action"
+           href="{{ url_for('archive') }}">
+            Return to Archive
+        </a>
+
+    </div>
+
+
+    <nav class="archive-record-breadcrumb">
+        <a href="{{ url_for('archive') }}">The Archive</a>
+        <span>›</span>
+
+        {% if target_type == 'memory' %}
+        <a href="{{ url_for('archive', room='memories') }}">
+            Memory Collection
+        </a>
+        {% elif target_type == 'journal' %}
+        <a href="{{ url_for('archive', room='library') }}">
+            The Library
+        </a>
+        {% elif target_type == 'voice' %}
+        <a href="{{ url_for('archive', room='oral') }}">
+            Oral Histories
+        </a>
+        {% else %}
+        <a href="{{ url_for('archive', room='documents') }}">
+            Special Collections
+        </a>
+        {% endif %}
+
+        <span>›</span>
+        <span>Historical record</span>
+    </nav>
+
+    <header class="archive-reading-header">
+        <span class="archive-eyebrow">
+            {{ target_label }}
+        </span>
+
+        <h1>
+            {{ (record.title or 'Untitled record')
+               | replace('_', ' ') | title }}
+        </h1>
+
+        {% if record.event_date %}
+        <p>{{ record.event_date }}</p>
+        {% endif %}
+    </header>
+
+    {% if target_type == 'voice' %}
+
+    <section class="archive-oral-record">
+
+        <span class="archive-eyebrow">
+            Original voice recording
+        </span>
+
+        {% if record.created_utc %}
+        <p class="archive-note">
+            Recorded {{ record.created_utc.strftime('%B %d, %Y') }}
+        </p>
+        {% endif %}
+
+        <audio controls preload="metadata" src="{{ url_for(
+                'voice_journal.play_recording',
+                journal_id=record.id
+            ) }}">
+Your browser does not support audio playback.
+        </audio>
+
+        <h2>Transcript</h2>
+
+    </section>
+
+    {% endif %}
+
+    <article class="archive-reading-content">
+        {% if target_type == 'journal' %}
+        {{ record.content | archive_plain_text }}
+        {% else %}
+        {{ record.content or 'No transcript or written content available.' }}
+        {% endif %}
+    </article>
+
+    {% if record.source_excerpt and record.source_excerpt != record.content %}
+    <section class="archive-reading-source">
+        <span class="archive-eyebrow">
+            Original source
+        </span>
+        <blockquote>{{ record.source_excerpt }}</blockquote>
+    </section>
+    {% endif %}
+
+    <section class="archive-connected-section">
+
+        <span class="archive-eyebrow">
+            The connected collection
+        </span>
+
+        <h2>Photographs of this experience</h2>
+
+        {% if photographs %}
+
+        <div class="archive-connected-photos">
+
+            {% for photo in photographs %}
+
+            <a class="archive-connected-photo"
+               href="{{ url_for(
+                   'archive_connections.photograph',
+                   asset_id=photo.id
+               ) }}">
+
+                <img loading="lazy"
+                     alt="{{ photo.title }}"
+                     src="/api/archive/gallery/{{ photo.id }}/thumbnail">
+
+                <h3>{{ photo.title }}</h3>
+
+                {% if photo.event_date %}
+                <p>{{ photo.event_date }}</p>
+                {% endif %}
+
+            </a>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <p class="archive-note">
+            No photographs have been connected
+            to this record yet.
+        </p>
+
+        {% endif %}
+
+    </section>
+
+</main>
+{% endblock %}

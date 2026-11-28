@@ -1,0 +1,221 @@
+.archive-reading-room {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 35px 25px 90px;
+}
+
+.archive-record-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--archive-muted);
+    margin-bottom: 50px;
+}
+
+.archive-record-breadcrumb a {
+    color: var(--archive-gold);
+    text-decoration: none;
+}
+
+.archive-reading-header {
+    margin-bottom: 40px;
+}
+
+.archive-reading-header h1 {
+    font-family: Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(36px, 6vw, 64px);
+    line-height: 1.15;
+    margin: 18px 0;
+    color: var(--archive-cream);
+}
+
+.archive-reading-header p {
+    color: var(--archive-muted);
+}
+
+.archive-reading-content {
+    max-width: 760px;
+    margin: 0 auto;
+    font-family: Georgia, serif;
+    font-size: 20px;
+    line-height: 1.95;
+    color: var(--archive-cream);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.archive-reading-source {
+    margin: 50px auto;
+    max-width: 760px;
+    border-left: 2px solid var(--archive-gold);
+    padding: 15px 25px;
+}
+
+.archive-reading-source blockquote {
+    font-family: Georgia, serif;
+    line-height: 1.8;
+    color: var(--archive-muted);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    margin: 15px 0;
+}
+
+.archive-connected-section {
+    border-top: 1px solid var(--archive-border);
+    padding-top: 35px;
+    margin-top: 60px;
+}
+
+.archive-connected-section h2 {
+    font-family: Georgia, serif;
+    font-size: 32px;
+    font-weight: 400;
+    margin: 15px 0 30px;
+}
+
+.archive-connected-photos {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fill, minmax(200px, 1fr)
+    );
+    gap: 25px;
+}
+
+.archive-connected-photo {
+    color: var(--archive-cream);
+    text-decoration: none;
+}
+
+.archive-connected-photo img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border: 1px solid var(--archive-border);
+}
+
+.archive-connected-photo h3 {
+    font-family: Georgia, serif;
+    font-weight: 400;
+    font-size: 21px;
+    margin: 12px 0 6px;
+}
+
+.archive-connected-photo p {
+    font-size: 12px;
+    color: var(--archive-muted);
+}
+
+.archive-preserved-photo {
+    margin: 0 0 30px;
+}
+
+.archive-preserved-photo img {
+    display: block;
+    width: 100%;
+    max-height: 75vh;
+    object-fit: contain;
+    background: #14120f;
+}
+
+.archive-preserved-photo figcaption {
+    font-family: Georgia, serif;
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--archive-muted);
+    margin-top: 20px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.archive-connected-record {
+    border-bottom: 1px solid var(--archive-border);
+    padding: 25px 0;
+}
+
+.archive-connected-record h3 {
+    font-family: Georgia, serif;
+    font-size: 25px;
+    font-weight: 400;
+    margin: 12px 0;
+}
+
+.archive-connected-record p {
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+
+.archive-manual-connection {
+    border: 1px solid var(--archive-border);
+    margin-top: 35px;
+    padding: 25px;
+}
+
+.archive-manual-connection summary {
+    cursor: pointer;
+    color: var(--archive-gold);
+}
+
+#archiveConnectionForm {
+    display: grid;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+#archiveConnectionForm input,
+#archiveConnectionForm select {
+    width: 100%;
+    box-sizing: border-box;
+    background: #211e18;
+    color: var(--archive-cream);
+    border: 1px solid var(--archive-border);
+    padding: 12px;
+}
+
+#archiveConnectionForm button {
+    justify-self: start;
+}
+
+@media (max-width: 600px) {
+    .archive-reading-room {
+        padding: 20px 12px 60px;
+    }
+
+    .archive-reading-content {
+        font-size: 18px;
+    }
+}
+
+.archive-oral-record {
+    max-width: 760px;
+    margin: 0 auto 35px;
+}
+
+.archive-oral-record audio {
+    display: block;
+    width: 100%;
+    margin: 25px 0 40px;
+}
+
+.archive-oral-record h2 {
+    font-family: Georgia, serif;
+    font-weight: 400;
+    font-size: 30px;
+}
+
+.archive-oral-record .archive-note {
+    margin-top: 15px;
+}
+
+
+.archive-return-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.archive-return-bar a {
+    text-decoration: none;
+}

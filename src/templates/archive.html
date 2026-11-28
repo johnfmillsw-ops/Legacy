@@ -4,327 +4,501 @@
 {% block title %}Legacy — Archive{% endblock %}
 
 {% block head %}
-<style>
-        .dashboard-hero {
-            position: relative;
-            overflow: hidden;
-            padding: clamp(24px, 5vw, 48px);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            background:
-                radial-gradient(
-                    ellipse at top right,
-                    #40372b 0%,
-                    transparent 65%
-                ),
-                var(--surface);
-        }
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='archive_timeline.css') }}">
 
-        .dashboard-hero h1 {
-            font-family: var(--font-heading);
-            font-size: clamp(30px, 5vw, 48px);
-            font-weight: 400;
-            overflow-wrap: anywhere;
-        }
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='archive_relationships.css') }}">
 
-        .dashboard-hero p {
-            max-width: 540px;
-            color: var(--text-secondary);
-            margin: 12px 0 24px;
-        }
 
-        .hero-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
 
-        .dashboard-section {
-            scroll-margin-top: 20px;
-        }
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='archive_gallery.css') }}">
 
-        .section-heading {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .section-heading h2 {
-            font-family: var(--font-heading);
-            font-weight: 400;
-            font-size: 25px;
-        }
-
-        .dashboard-stats {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-        }
-
-        .dashboard-stat {
-            padding: 18px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            border-radius: var(--radius-md);
-        }
-
-        .stat-value {
-            color: var(--accent);
-            font-size: clamp(22px, 4vw, 32px);
-            font-weight: 500;
-        }
-
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .category-grid {
-            display: grid;
-            grid-template-columns: repeat(
-                2, minmax(0, 1fr)
-            );
-            gap: 10px;
-        }
-
-        .category-card {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            min-height: 110px;
-            padding: 16px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text-primary) !important;
-            transition: background var(--transition);
-        }
-
-        .category-card:hover {
-            background: var(--surface-raised);
-        }
-
-        .category-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: #302b24;
-            color: var(--accent);
-        }
-
-        .category-name {
-            text-transform: capitalize;
-            font-size: 14px;
-            overflow-wrap: anywhere;
-        }
-
-        .dashboard-details {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-        }
-
-        .dashboard-details summary {
-            padding: 18px 20px;
-            cursor: pointer;
-            font-weight: 500;
-            min-height: 54px;
-        }
-
-        .details-content {
-            padding: 0 20px 20px;
-        }
-
-        .consent-option {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            margin: 16px 0;
-            color: var(--text-secondary);
-        }
-
-        .consent-option input {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-            margin-top: 4px;
-        }
-
-        .dashboard-notice {
-            padding: 12px 14px;
-            margin-bottom: 16px;
-            background: var(--surface-raised);
-            border-radius: var(--radius-sm);
-            color: var(--warning);
-        }
-
-        .dashboard-footer {
-            padding: 24px 0 8px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 12px;
-        }
-
-        .legacy-app [hidden] {
-            display: none !important;
-        }
-
-        @media (min-width: 768px) {
-            .category-grid {
-                grid-template-columns: repeat(
-                    auto-fit, minmax(145px, 1fr)
-                );
-            }
-        }
-
-        @media (max-width: 480px) {
-            .hero-actions {
-                flex-direction: column;
-            }
-
-            .hero-actions .legacy-button {
-                width: 100%;
-            }
-
-            .dashboard-stat {
-                padding: 14px;
-            }
-        }
-    </style>
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='archive.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='archive_rooms.css') }}">
 {% endblock %}
 
 {% block content %}
 
-<header class="legacy-page-header">
+<div class="archive-world">
+<form action="{{ url_for('archive_relationships.archive_search') }}" method="get" class="archive-toolbar">
+<input name="q" placeholder="Search your entire Archive" maxlength="300" required>
+<button class="archive-action">Search Archive</button>
+</form>
 
-    <div class="legacy-eyebrow">
-        Your Legacy
-    </div>
+    <header class="archive-entrance">
 
-    <h1 class="legacy-page-title">
-        Archive
-    </h1>
+        <div class="archive-ornament">✦</div>
 
-    <p class="legacy-page-description">
-        Preserve the documents, stories and personal
-        records that carry your history forward.
-    </p>
+        <span class="archive-eyebrow">
+            THE PERSONAL COLLECTION
+        </span>
 
-</header>
+        <h1>The Archive</h1>
 
-<section id="archive"
-                     class="dashboard-section">
+        <div class="archive-rule"></div>
 
-                <div class="section-heading">
-                    <h2>Personal archive</h2>
-                </div>
+        <p>
+            Every life leaves a history.
+            Here, yours is preserved.
+        </p>
 
-                <div class="legacy-grid">
+        <span class="archive-subject">
+            The collection of {{ subject }}
+        </span>
 
-                    <article class="legacy-card">
+    </header>
 
-                        <div class="category-icon">
-                            {{ nav_icon("archive") }}
-                        </div>
+    <section class="archive-introduction">
 
-                        <h3 class="legacy-card-title"
-                            style="margin-top:16px;">
-                            Preserve a document
-                        </h3>
+        <span class="archive-eyebrow">
+            EXPLORE YOUR HISTORY
+        </span>
 
-                        <p class="legacy-muted">
-                            Add personal writings, biographies,
-                            reflections or other documents.
-                        </p>
+        <h2>Rooms of remembrance</h2>
 
-                        <form method="post"
-                              action="{{ url_for('upload_summary') }}"
-                              enctype="multipart/form-data">
+        <p>
+            Discover the stories, voices and moments
+            that form your personal history.
+        </p>
 
-                            <input type="hidden"
-                                   name="_csrf_token"
-                                   value="{{ csrf_token() }}">
+    </section>
 
-                            <div class="legacy-field">
+    <nav class="archive-rooms"
+         aria-label="Archive collections">
 
-                                <input type="file"
-                                       name="file"
-                                       accept=".txt,.md,.pdf"
-                                       aria-label="Select a document"
-                                       required>
+        <a class="archive-room" href="#archive-library">
+            <span class="archive-room-number">01</span>
+            <span class="archive-room-icon">▤</span>
+            <h3>The Library</h3>
+            <p>Written journals, reflections and stories.</p>
+            <span class="archive-room-link">
+                Enter the library →
+            </span>
+        </a>
 
-                            </div>
+        <a class="archive-room" href="#archive-oral">
+            <span class="archive-room-number">02</span>
+            <span class="archive-room-icon">♫</span>
+            <h3>Oral Histories</h3>
+            <p>Your experiences, in your own voice.</p>
+            <span class="archive-room-link">
+                Explore recordings →
+            </span>
+        </a>
 
-                            <button type="submit"
-                                    class="legacy-button legacy-button-primary">
+        <a class="archive-room" href="#archive-gallery">
+            <span class="archive-room-number">03</span>
+            <span class="archive-room-icon">▧</span>
+            <h3>The Gallery</h3>
+            <p>Faces, places and moments captured in time.</p>
+            <span class="archive-room-link">
+                Enter the gallery →
+            </span>
+        </a>
 
-                                Upload &amp; process
+        <a class="archive-room" href="#archive-documents">
+            <span class="archive-room-number">04</span>
+            <span class="archive-room-icon">◇</span>
+            <h3>Special Collections</h3>
+            <p>Documents and artifacts of significance.</p>
+            <span class="archive-room-link">
+                Explore collections →
+            </span>
+        </a>
 
-                            </button>
+        <a class="archive-room archive-room-wide"
+           href="#archive-timeline">
+            <span class="archive-room-number">05</span>
+            <span class="archive-room-icon">∞</span>
+            <h3>A Life in Time</h3>
+            <p>
+                Follow the chapters, experiences and
+                connections that form your history.
+            </p>
+            <span class="archive-room-link">
+                Explore your timeline →
+            </span>
+        </a>
 
-                        </form>
 
-                    </article>
+        <a class="archive-room archive-room-wide"
+           href="#archive-memories">
 
-                    <article class="legacy-card">
+            <span class="archive-room-number">06</span>
+            <span class="archive-room-icon">✦</span>
 
-                        <div class="category-icon">
-                            {{ nav_icon("book") }}
-                        </div>
+            <h3>The Memory Collection</h3>
 
-                        <h3 class="legacy-card-title"
-                            style="margin-top:16px;">
-                            Your life summary
-                        </h3>
+            <p>
+                Individual experiences and the
+                original records that preserve them.
+            </p>
 
-                        <p class="legacy-muted">
-                            Update or export your personal
-                            summary using your existing knowledge.
-                        </p>
+            <span class="archive-room-link">
+                Explore memories →
+            </span>
 
-                        <form method="post"
-                              action="{{ url_for('update_core_summary_route') }}">
+        </a>
 
-                            <input type="hidden"
-                                   name="_csrf_token"
-                                   value="{{ csrf_token() }}">
+</nav>
 
-                            <button type="submit"
-                                    class="legacy-button">
+    <section class="archive-section"
+             id="archive-library" hidden>
 
-                                Update core summary
+        <span class="archive-eyebrow">COLLECTION I</span>
 
-                            </button>
+        <h2>The Library</h2>
 
-                        </form>
+        <p>Thoughts and experiences preserved in writing.</p>
 
-                        <form method="post"
-                              action="{{ url_for('export') }}"
-                              style="margin-top:12px;">
+        <div id="archiveWrittenRecords"
+             class="archive-record-grid"
+             aria-live="polite">
+            Loading your journals...
+        </div>
 
-                            <input type="hidden"
-                                   name="_csrf_token"
-                                   value="{{ csrf_token() }}">
+        <a class="archive-action"
+           href="{{ url_for('journal') }}">
+            Open journal workspace
+        </a>
 
-                            <button type="submit"
-                                    class="legacy-button">
+    </section>
 
-                                Export summary
+    <section class="archive-section"
+             id="archive-oral" hidden>
 
-                            </button>
+        <span class="archive-eyebrow">COLLECTION II</span>
 
-                        </form>
+        <h2>Oral Histories</h2>
 
-                    </article>
+        <p>
+            Return to the moments you preserved
+            in your own voice.
+        </p>
 
-                </div>
+        <div class="archive-toolbar">
 
-            </section>
+            <input id="archiveVoiceSearch"
+                   type="search"
+                   placeholder="Search recordings..."
+                   aria-label="Search recordings">
 
+            <select id="archiveVoiceSort"
+                    aria-label="Sort recordings">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="title">Title A–Z</option>
+            </select>
+
+            <button id="archiveVoiceRefresh"
+                    class="archive-action"
+                    type="button">
+                Refresh
+            </button>
+
+        </div>
+
+        <p id="archiveVoiceCount"
+           class="archive-note"
+           aria-live="polite"></p>
+
+        <div id="archiveVoiceRecords"
+             class="archive-record-grid"
+             aria-live="polite">
+            Loading your recordings...
+        </div>
+
+    </section>
+
+    <section class="archive-section"
+             id="archive-gallery" hidden>
+
+        <span class="archive-eyebrow">COLLECTION III</span>
+
+        <h2>The Gallery</h2>
+        {% include "archive_gallery.html" %}
+    </section>
+
+    <section class="archive-section"
+             id="archive-documents" hidden>
+
+        <span class="archive-eyebrow">COLLECTION IV</span>
+
+        <h2>Special Collections</h2>
+
+        <div class="archive-collection-browser">
+
+            <h3>Preserved documents</h3>
+
+            <p>
+                Explore the original writings and
+                historical records in your collection.
+            </p>
+
+            <div class="archive-toolbar">
+                <input id="archiveDocumentSearch"
+                       type="search"
+                       placeholder="Search documents..."
+                       aria-label="Search documents">
+            </div>
+
+            <p id="archiveDocumentCount"
+               class="archive-note"
+               aria-live="polite"></p>
+
+            <div id="archiveDocuments"
+                 class="archive-record-grid">
+                Loading documents...
+            </div>
+
+        </div>
+
+
+        <div class="archive-tools">
+
+            <article class="archive-tool">
+
+                <h3>Preserve a document</h3>
+
+                <p>
+                    Add biographies, personal writings
+                    and historical documents.
+                </p>
+
+                <form method="post"
+                      action="{{ url_for('upload_summary') }}"
+                      enctype="multipart/form-data">
+
+                    <input type="hidden"
+                           name="_csrf_token"
+                           value="{{ csrf_token() }}">
+
+                    <input type="file"
+                           name="file"
+                           accept=".txt,.md,.pdf"
+                           aria-label="Select a document"
+                           required>
+
+                    <button class="archive-action"
+                            type="submit">
+                        Upload &amp; process
+                    </button>
+
+                </form>
+
+            </article>
+
+            <article class="archive-tool">
+
+                <h3>Your life summary</h3>
+
+                <p>
+                    Maintain and export your personal history.
+                </p>
+
+                <form method="post"
+                      action="{{ url_for('update_core_summary_route') }}">
+
+                    <input type="hidden"
+                           name="_csrf_token"
+                           value="{{ csrf_token() }}">
+
+                    <button class="archive-action"
+                            type="submit">
+                        Update core summary
+                    </button>
+
+                </form>
+
+                <form method="post"
+                      action="{{ url_for('export') }}">
+
+                    <input type="hidden"
+                           name="_csrf_token"
+                           value="{{ csrf_token() }}">
+
+                    <button class="archive-action"
+                            type="submit">
+                        Export summary
+                    </button>
+
+                </form>
+
+            </article>
+
+        </div>
+
+    </section>
+
+    <section class="archive-section"
+             id="archive-timeline" hidden>
+
+        <span class="archive-eyebrow">COLLECTION V</span>
+
+        <h2>A Life in Time</h2>
+
+        <p>
+            Where individual records become
+            an interconnected history.
+        </p>
+
+        {% include "archive_timeline.html" %}
+
+</section>
+
+
+    <section class="archive-section"
+             id="archive-memories" hidden>
+
+        <span class="archive-eyebrow">
+            COLLECTION VI
+        </span>
+
+        <h2>The Memory Collection</h2>
+
+        <p>
+            Explore individual experiences and
+            their original historical sources.
+            Extracted memories may include
+            interpretations awaiting your review.
+        </p>
+
+        <div class="archive-toolbar">
+
+            <input id="archiveMemorySearch"
+                   type="search"
+                   placeholder="Search memories..."
+                   aria-label="Search memories">
+
+            <select id="archiveMemoryCategory"
+                    aria-label="Filter memory category">
+                <option value="">All categories</option>
+            </select>
+
+        </div>
+
+        <p id="archiveMemoryCount"
+           class="archive-note"
+           aria-live="polite"></p>
+
+        <div id="archiveMemories"
+             class="archive-record-grid">
+            Loading memories...
+        </div>
+
+    </section>
+
+    <dialog id="archiveCollectionDialog"
+            class="archive-dialog"
+            aria-labelledby="archiveCollectionTitle">
+
+        <div class="archive-dialog-heading">
+
+            <span class="archive-eyebrow">
+                HISTORICAL RECORD
+            </span>
+
+            <button id="archiveCloseCollection"
+                    class="archive-action"
+                    type="button">
+                Close ×
+            </button>
+
+        </div>
+
+        <h2 id="archiveCollectionTitle"></h2>
+
+        <p id="archiveCollectionMeta"
+           class="archive-note"></p>
+
+        <div id="archiveCollectionBody"
+             class="archive-transcript"></div>
+
+        <div id="archiveCollectionRelated"
+             class="archive-related"></div>
+
+    </dialog>
+
+<dialog id="archiveRecordDialog"
+            class="archive-dialog">
+
+        <div class="archive-dialog-heading">
+
+            <span class="archive-eyebrow">
+                FROM YOUR PERSONAL COLLECTION
+            </span>
+
+            <button id="archiveCloseRecord"
+                    class="archive-action"
+                    type="button"
+                    aria-label="Close record">
+                Close ×
+            </button>
+
+        </div>
+
+        <h2 id="archiveRecordTitle"></h2>
+
+        <p id="archiveRecordMetadata"
+           class="archive-note"></p>
+
+        <audio id="archiveRecordAudio"
+               controls
+               preload="none"
+               hidden></audio>
+
+        <div id="archiveRecordContent"
+             class="archive-transcript"
+             aria-live="polite"></div>
+
+    </dialog>
+
+    <footer class="archive-footer">
+
+        <span>✦</span>
+
+        <p>What is remembered is never entirely lost.</p>
+
+        <small>LEGACY · THE PERSONAL ARCHIVE</small>
+
+    </footer>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script defer
+        src="{{ url_for('static', filename='archive_timeline.js') }}">
+</script>
+
+<script defer
+        src="{{ url_for('static', filename='archive_rooms.js') }}">
+</script>
+
+<script defer
+        src="{{ url_for('static', filename='archive_gallery.js', v='20261127-photo-management-1') }}">
+</script>
+
+<script defer
+        src="{{ url_for('static', filename='archive_collections.js') }}">
+</script>
+
+<script defer
+        src="{{ url_for('static', filename='archive.js') }}">
+</script>
+
+<script defer
+        src="{{ url_for('static', filename='archive_volumes.js') }}">
+</script>
+
+
+
+<script defer
+        src="{{ url_for('static', filename='archive_record_navigation.js') }}">
+</script>
 {% endblock %}

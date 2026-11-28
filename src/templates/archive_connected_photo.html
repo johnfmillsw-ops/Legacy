@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Photograph | Legacy{% endblock %}
+
+{% block head %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='archive.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='archive_connections.css') }}">
+{% endblock %}
+
+{% block content %}
+<main class="archive-world archive-reading-room">
+
+    <div class="archive-return-bar">
+
+        <a class="archive-action"
+           href="{{ url_for('archive', room='gallery') }}">
+            ← Back to Gallery
+        </a>
+
+        <a class="archive-action"
+           href="{{ url_for('archive') }}">
+            Return to Archive
+        </a>
+
+    </div>
+
+
+    <nav class="archive-record-breadcrumb">
+        <a href="{{ url_for('archive') }}">The Archive</a>
+        <span>›</span>
+        <a href="{{ url_for('archive', room='gallery') }}">
+            The Gallery
+        </a>
+        <span>›</span>
+        <span>Photograph</span>
+    </nav>
+
+    <header class="archive-reading-header">
+
+        <span class="archive-eyebrow">
+            Photographic collection
+        </span>
+
+        <h1>{{ photo.title }}</h1>
+
+        <p>
+            {{ photo.event_date or '' }}
+            {% if photo.location %}
+                · {{ photo.location }}
+            {% endif %}
+        </p>
+
+    </header>
+
+    <figure class="archive-preserved-photo">
+
+        <img src="/api/archive/gallery/{{ photo.id }}/original"
+             alt="{{ photo.title }}">
+
+        <figcaption>{{ photo.description }}</figcaption>
+
+    </figure>
+
+    {% if photo.people %}
+    <p class="archive-note">
+        People: {{ photo.people }}
+    </p>
+    {% endif %}
+
+    <a class="archive-action"
+       href="/api/archive/gallery/{{ photo.id }}/original?download=1">
+        Download preserved photograph
+    </a>
+
+    <section class="archive-connected-section">
+
+        <span class="archive-eyebrow">
+            The connected collection
+        </span>
+
+        <h2>Related historical records</h2>
+
+        {% for record in records %}
+
+        <article class="archive-connected-record">
+
+            <span class="archive-eyebrow">
+                {{ target_types[record.target_type] }}
+            </span>
+
+            <h3>
+                {{ (record.title or 'Untitled record')
+                   | replace('_', ' ') | title }}
+            </h3>
+
+            <p>{{ record.preview }}</p>
+
+            <a class="archive-action"
+               href="{{ url_for(
+                   'archive_connections.record',
+                   target_type=record.target_type,
+                   target_id=record.target_id
+               ) }}">
+                Read historical record →
+            </a>
+
+            <button type="button"
+                    class="archive-action"
+                    data-remove-connection="{{ record.id }}">
+                Remove connection
+            </button>
+
+        </article>
+
+        {% else %}
+
+        <p class="archive-note">
+            No confirmed connections yet.
+        </p>
+
+        {% endfor %}
+
+    </section>
+
+    <details class="archive-manual-connection">
+
+        <summary>Connect another historical record</summary>
+
+        <form id="archiveConnectionForm"
+              data-asset-id="{{ photo.id }}">
+
+            <input type="hidden"
+                   name="_csrf_token"
+                   value="{{ csrf_token() }}">
+
+            <label for="archiveConnectionType">
+                Collection
+            </label>
+
+            <select id="archiveConnectionType">
+                <option value="memory">Memories</option>
+                <option value="journal">Journal entries</option>
+                <option value="document">Documents</option>
+                <option value="voice">Oral histories</option>
+            </select>
+
+            <label for="archiveConnectionSearch">
+                Search historical records
+            </label>
+
+            <input id="archiveConnectionSearch"
+                   type="search"
+                   placeholder="Search names, places or experiences"
+                   required
+                   minlength="2"
+                   maxlength="200">
+
+            <button class="archive-action" type="submit">
+                Search collection
+            </button>
+
+        </form>
+
+        <p id="archiveConnectionMessage"
+           class="archive-note"
+           aria-live="polite"></p>
+
+        <div id="archiveConnectionResults"></div>
+
+    </details>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script defer
+        src="{{ url_for('static', filename='archive_connections.js') }}">
+</script>
+{% endblock %}

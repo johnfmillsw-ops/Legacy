@@ -1,0 +1,220 @@
+<div class="archive-gallery-workspace">
+
+    <p>
+        Preserve the faces, places and moments
+        that form your personal history.
+    </p>
+
+    <details class="archive-photo-upload">
+
+        <summary>+ Preserve a photograph</summary>
+
+        <form id="archivePhotoForm"
+              enctype="multipart/form-data">
+
+            <input type="hidden"
+                   name="_csrf_token"
+                   value="{{ csrf_token() }}">
+
+            <label>
+                Original photograph
+
+                <input type="file"
+                       name="photo"
+                       accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf,.heic,.heif,.pdf"
+                       required>
+            </label>
+
+            <label>
+                Title
+
+                <input type="text"
+                       name="title"
+                       maxlength="200"
+                       placeholder="Give this moment a name"
+                       required>
+            </label>
+
+            <label>
+                The story behind this photograph
+
+                <textarea name="description"
+                          maxlength="10000"
+                          rows="5"
+                          placeholder="What happened? Why does this moment matter?"></textarea>
+            </label>
+
+            <div class="archive-photo-fields">
+
+                <label>
+                    Event date
+
+                    <input type="text"
+                           name="event_date"
+                           maxlength="10"
+                           placeholder="YYYY, YYYY-MM or YYYY-MM-DD">
+                </label>
+
+                <label>
+                    Location
+
+                    <input type="text"
+                           name="location"
+                           maxlength="300"
+                           placeholder="Where was this taken?">
+                </label>
+
+            </div>
+
+            <label>
+                People
+
+                <input type="text"
+                       name="people"
+                       maxlength="1000"
+                       placeholder="Names of people in the photograph">
+            </label>
+
+            <p class="archive-note">
+                JPEG, PNG, WebP, HEIC, HEIF or PDF · Maximum 15 MB.
+                Choose how your photograph will be preserved.
+            </p>
+
+            <label>PDF page (PDF files only)
+                <input type="number" name="pdf_page" min="1" max="10000" value="1">
+                <small>Import one page at a time. Original preservation retains the entire PDF.</small>
+            </label>
+            <label>Preservation quality
+                <select name="preservation_mode">
+                    <option value="standard">Standard — optimized WebP (original not retained)</option>
+                    <option value="original">Original — retain exact uploaded file</option>
+                </select>
+            </label>
+            <button type="submit"
+                    class="archive-action">
+                Preserve photograph
+            </button>
+
+            <p id="archivePhotoMessage"
+               aria-live="polite"></p>
+
+        </form>
+
+    </details>
+
+    <div class="archive-toolbar">
+
+        <input type="search"
+               id="archivePhotoSearch"
+               placeholder="Search photographs..."
+               aria-label="Search photographs">
+
+        <select id="archivePhotoSort"
+                aria-label="Sort photographs">
+
+            <option value="newest">Recently preserved</option>
+            <option value="event">Historical date</option>
+            <option value="title">Title A–Z</option>
+
+        </select>
+
+    </div>
+
+    <p id="archivePhotoCount"
+       class="archive-note"
+       aria-live="polite"></p>
+
+    <div id="archivePhotoGallery"
+         class="archive-photo-grid">
+        Loading photographs...
+    </div>
+
+</div>
+
+<dialog id="archivePhotoDialog"
+        class="archive-dialog archive-photo-dialog"
+        aria-labelledby="archivePhotoTitle">
+
+    <div class="archive-dialog-heading">
+
+        <span class="archive-eyebrow">
+            FROM YOUR PHOTOGRAPHIC COLLECTION
+        </span>
+
+        <button id="archiveClosePhoto"
+                class="archive-action"
+                type="button">
+            ← Back to Gallery
+        </button>
+
+    </div>
+
+    <h2 id="archivePhotoTitle"></h2>
+
+    <img id="archivePhotoImage"
+         alt=""
+         class="archive-photo-original">
+
+    <p id="archivePhotoDescription"
+       class="archive-photo-description"></p>
+
+    <div id="archivePhotoMetadata"></div>
+
+    <a id="archivePhotoDownload"
+       class="archive-action">
+        Download preserved photograph
+    </a>
+
+
+    <details id="archivePhotoManage" class="archive-photo-upload">
+        <summary>Edit photograph details</summary>
+        <form id="archivePhotoEditForm">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <label>Title <input name="title" maxlength="200" required></label>
+            <label>Story <textarea name="description" maxlength="10000" rows="5"></textarea></label>
+            <label>Event date <input name="event_date" maxlength="10" placeholder="YYYY, YYYY-MM or YYYY-MM-DD"></label>
+            <label>Location <input name="location" maxlength="300"></label>
+            <label>People <input name="people" maxlength="1000"></label>
+            <button type="submit" class="archive-action">Save changes</button>
+            <button type="button" id="archivePhotoDelete" class="archive-action">Delete photograph</button>
+        </form>
+    </details>
+    <p id="archivePhotoManageMessage" role="status"></p>
+    <section id="archivePhotoRelationships"
+             class="archive-relationships">
+
+        <span class="archive-eyebrow">
+            THE CONNECTED COLLECTION
+        </span>
+
+        <h3>Related memories &amp; records</h3>
+
+        <p>
+            Discover other records that may
+            preserve this same experience.
+        </p>
+
+        <button id="archiveDiscoverRelationships"
+                class="archive-action"
+                type="button">
+            Discover connections
+        </button>
+
+        <p id="archiveRelationshipMessage"
+           class="archive-note"
+           aria-live="polite"></p>
+
+
+        <p>
+            <a id="archivePhotoReadingRoom"
+               class="archive-action"
+               href="#"
+               hidden>
+                Open photograph &amp; manage connections
+            </a>
+        </p>
+<div id="archiveRelationshipList"></div>
+
+    </section>
+
+</dialog>

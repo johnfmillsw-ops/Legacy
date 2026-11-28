@@ -1,0 +1,46 @@
+.archive-relationships {
+    border-top: 1px solid var(--archive-border);
+    margin-top: 40px;
+    padding-top: 30px;
+}
+
+.archive-relationships > h3 {
+    font-size: 30px;
+    margin: 10px 0;
+}
+
+.archive-relationship {
+    padding: 25px 0;
+    border-bottom: 1px solid var(--archive-border);
+}
+
+.archive-relationship h3 {
+    font-size: 23px;
+    margin: 12px 0;
+}
+
+.archive-relationship-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.archive-match-reasons {
+    margin-top: 15px;
+}
+
+.archive-match-reasons summary {
+    color: var(--archive-gold);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.archive-match-reasons p {
+    margin: 8px 0;
+}
+
+#archiveDiscoverRelationships:disabled {
+    opacity: .5;
+    cursor: wait;
+}

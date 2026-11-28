@@ -95,6 +95,31 @@ from journal_routes import journal_bp
 
 app.register_blueprint(journal_bp)
 
+from archive_routes import archive_bp
+
+app.register_blueprint(archive_bp)
+
+from archive_gallery import gallery_bp
+
+app.register_blueprint(gallery_bp)
+
+from archive_relationships import relationships_bp
+
+app.register_blueprint(relationships_bp)
+
+from archive_connections import connections_bp
+
+app.register_blueprint(connections_bp)
+
+from archive_timeline import timeline_bp
+
+app.register_blueprint(timeline_bp)
+
+
+
+
+
+
 
 
 # --------------------------------------------------

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Search the Archive{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='archive.css') }}">{% endblock %}
+{% block content %}
+<div class="archive-world">
+<a class="archive-action" href="{{ url_for('archive') }}">← Return to Archive</a>
+<h1>Search your history</h1>
+<form method="get" class="archive-toolbar"><input name="q" value="{{ query }}" placeholder="Search places, people, experiences" maxlength="300" required><button class="archive-action">Search</button></form>
+{% if query %}<p>{{ results|length }} matching records (up to 50)</p>{% endif %}
+{% for record in results %}<article class="archive-record"><p class="archive-eyebrow">{{ record.target_type }} · {{ record.event_date or 'Undated' }}</p><h3>{{ record.title }}</h3><p>{{ record.preview }}</p><a class="archive-action" href="/archive/connections/record/{{ record.target_type }}/{{ record.target_id }}">Read record →</a></article>{% endfor %}
+</div>
+{% endblock %}

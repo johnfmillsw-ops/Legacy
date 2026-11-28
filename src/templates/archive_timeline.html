@@ -1,0 +1,101 @@
+<div class="archive-timeline-intro">
+
+    <span class="archive-eyebrow">
+        THE CHRONICLE OF A LIFE
+    </span>
+
+    <h3>Every record belongs to a larger story.</h3>
+
+    <p>
+        Explore experiences, photographs, personal reflections
+        and voices preserved across the years.
+    </p>
+
+</div>
+
+<div class="archive-chronology-controls">
+
+    <div class="archive-chronology-modes">
+
+        <button type="button"
+                data-timeline-mode="event"
+                aria-pressed="true">
+            Life events
+        </button>
+
+        <button type="button"
+                data-timeline-mode="preserved"
+                aria-pressed="false">
+            Preservation history
+        </button>
+
+    </div>
+
+    <div class="archive-chronology-filters">
+
+        <input type="search"
+               id="archiveTimelineSearch"
+               aria-label="Search chronology"
+               placeholder="Search your history">
+
+        <select id="archiveTimelineCollection"
+                aria-label="Historical collection">
+
+            <option value="all">All collections</option>
+            <option value="memory">Memories</option>
+            <option value="journal">Journal entries</option>
+            <option value="voice">Oral histories</option>
+            <option value="photo">Photographs</option>
+            <option value="document">Documents</option>
+
+        </select>
+
+        <select id="archiveTimelineDirection"
+                aria-label="Chronological order">
+
+            <option value="desc">Newest first</option>
+            <option value="asc">Oldest first</option>
+
+        </select>
+
+    </div>
+
+    <p id="archiveTimelineExplanation"
+       class="archive-note">
+
+        Organized by known historical dates.
+        Undated records appear separately.
+
+    </p>
+
+    <p id="archiveTimelineStatus"
+       class="archive-note"
+       aria-live="polite"></p>
+
+</div>
+
+<div id="archiveUnifiedTimeline"
+     class="archive-unified-timeline"
+     aria-live="polite">
+</div>
+
+<nav class="archive-chronology-pagination"
+     aria-label="Timeline pages">
+
+    <button type="button"
+            class="archive-action"
+            id="archiveTimelinePrevious"
+            disabled>
+        ← Previous
+    </button>
+
+    <span id="archiveTimelinePage"></span>
+
+    <button type="button"
+            class="archive-action"
+            id="archiveTimelineNext"
+            disabled>
+        Next →
+    </button>
+
+</nav>

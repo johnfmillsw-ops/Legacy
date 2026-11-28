@@ -1,0 +1,425 @@
+.archive-world {
+    --archive-gold: #bda27a;
+    --archive-cream: #eee4d3;
+    --archive-muted: #b5aa99;
+    --archive-border: rgba(189,162,122,.24);
+
+    color: var(--archive-cream);
+    background: #171612;
+    border: 1px solid var(--archive-border);
+    border-radius: 18px;
+    padding: clamp(20px,4vw,56px);
+    min-height: 80vh;
+}
+
+.archive-world * {
+    box-sizing: border-box;
+}
+
+.archive-world [hidden] {
+    display: none !important;
+}
+
+.archive-world h1,
+.archive-world h2,
+.archive-world h3 {
+    font-family: Georgia,"Times New Roman",serif;
+    font-weight: 400;
+    color: var(--archive-cream);
+}
+
+.archive-world p {
+    color: var(--archive-muted);
+    line-height: 1.75;
+}
+
+.archive-entrance {
+    text-align: center;
+    padding: 75px 20px 80px;
+    background:
+        radial-gradient(
+            ellipse at 50% 0%,
+            rgba(168,129,75,.20),
+            transparent 72%
+        );
+    border: 1px solid var(--archive-border);
+}
+
+.archive-ornament {
+    color: var(--archive-gold);
+    font-size: 32px;
+    margin-bottom: 26px;
+}
+
+.archive-eyebrow {
+    display: block;
+    color: var(--archive-gold);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .24em;
+}
+
+.archive-entrance h1 {
+    font-size: clamp(48px,7vw,92px);
+    letter-spacing: -.045em;
+    margin: 18px 0;
+}
+
+.archive-rule {
+    width: 76px;
+    height: 1px;
+    background: var(--archive-gold);
+    margin: 26px auto;
+}
+
+.archive-entrance p {
+    font-family: Georgia,serif;
+    font-size: clamp(17px,2vw,23px);
+}
+
+.archive-subject {
+    display: block;
+    margin-top: 30px;
+    font-size: 12px;
+    letter-spacing: .12em;
+    color: var(--archive-gold);
+}
+
+.archive-introduction {
+    padding: 60px 0 28px;
+}
+
+.archive-introduction h2,
+.archive-section h2 {
+    font-size: clamp(30px,4vw,44px);
+    margin: 12px 0;
+}
+
+.archive-rooms {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 18px;
+}
+
+.archive-room {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 270px;
+    padding: 30px;
+    border: 1px solid var(--archive-border);
+    background:
+        linear-gradient(145deg,#30291f,#1c1a16 85%);
+    text-decoration: none !important;
+    color: var(--archive-cream);
+    transition:
+        transform .25s ease,
+        border-color .25s ease,
+        background .25s ease;
+}
+
+.archive-room:hover {
+    transform: translateY(-3px);
+    border-color: var(--archive-gold);
+    background:
+        linear-gradient(145deg,#403426,#211e18);
+}
+
+.archive-world :focus-visible {
+    outline: 2px solid var(--archive-gold);
+    outline-offset: 4px;
+}
+
+.archive-room-number {
+    position: absolute;
+    right: 25px;
+    top: 24px;
+    color: var(--archive-gold);
+    font-size: 12px;
+    letter-spacing: .15em;
+}
+
+.archive-room-icon {
+    font-size: 38px;
+    color: var(--archive-gold);
+}
+
+.archive-room h3 {
+    font-size: 30px;
+    margin: 22px 0 4px;
+}
+
+.archive-room p {
+    margin-bottom: 24px;
+}
+
+.archive-room-link {
+    color: var(--archive-gold);
+    font-size: 13px;
+    margin-top: auto;
+}
+
+.archive-room-wide {
+    grid-column: 1 / -1;
+    min-height: 230px;
+}
+
+.archive-section {
+    padding: 46px 0;
+    margin-top: 30px;
+    border-top: 1px solid var(--archive-border);
+    scroll-margin-top: 30px;
+}
+
+.archive-note {
+    font-size: 13px;
+    color: var(--archive-muted);
+}
+
+.archive-tools,
+.archive-record-grid {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 18px;
+    margin: 28px 0;
+}
+
+.archive-tool,
+.archive-record {
+    background: #211e18;
+    padding: 25px;
+    border: 1px solid var(--archive-border);
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.archive-record {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.archive-record h3,
+.archive-tool h3 {
+    font-size: 24px;
+    margin: 12px 0;
+}
+
+.archive-record .archive-action {
+    margin-top: auto;
+}
+
+.archive-tool form {
+    margin-top: 16px;
+}
+
+.archive-tool input[type="file"] {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 15px;
+    color: var(--archive-muted);
+}
+
+.archive-action {
+    display: inline-block;
+    padding: 11px 18px;
+    background: transparent;
+    border: 1px solid var(--archive-gold);
+    border-radius: 3px;
+    color: var(--archive-gold);
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.archive-action:hover {
+    background: var(--archive-gold);
+    color: #171612;
+}
+
+.archive-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 25px 0;
+}
+
+.archive-toolbar input,
+.archive-toolbar select {
+    background: #211e18;
+    color: var(--archive-cream);
+    border: 1px solid var(--archive-border);
+    padding: 12px;
+    border-radius: 3px;
+    min-width: 0;
+}
+
+.archive-toolbar input {
+    flex: 1 1 200px;
+}
+
+.archive-empty {
+    text-align: center;
+    padding: 45px 20px;
+    border: 1px dashed var(--archive-border);
+    margin-top: 25px;
+}
+
+.archive-empty small {
+    color: var(--archive-muted);
+}
+
+.archive-timeline {
+    margin: 30px 0;
+    padding-left: 25px;
+    border-left: 1px solid var(--archive-gold);
+}
+
+.archive-timeline-item {
+    position: relative;
+    padding: 10px 0 25px;
+}
+
+.archive-timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -30px;
+    top: 17px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--archive-gold);
+}
+
+.archive-timeline-item h3 {
+    margin: 10px 0;
+}
+
+.archive-dialog {
+    width: min(850px,92vw);
+    max-height: 85vh;
+    overflow-y: auto;
+    background: #211e18;
+    color: var(--archive-cream);
+    border: 1px solid var(--archive-gold);
+    border-radius: 8px;
+    padding: clamp(20px,4vw,40px);
+}
+
+.archive-dialog::backdrop {
+    background: rgba(0,0,0,.8);
+}
+
+.archive-dialog-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.archive-dialog h2 {
+    font-size: clamp(25px,4vw,40px);
+    margin-top: 30px;
+}
+
+.archive-dialog audio {
+    width: 100%;
+    margin: 20px 0;
+}
+
+.archive-transcript {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: Georgia,serif;
+    font-size: 17px;
+    line-height: 1.9;
+    padding: 25px 0;
+    border-top: 1px solid var(--archive-border);
+}
+
+.archive-footer {
+    text-align: center;
+    padding: 45px 0 20px;
+    border-top: 1px solid var(--archive-border);
+}
+
+.archive-footer span {
+    color: var(--archive-gold);
+    font-size: 25px;
+}
+
+.archive-footer p {
+    font-family: Georgia,serif;
+    font-style: italic;
+    font-size: 19px;
+}
+
+.archive-footer small {
+    color: var(--archive-gold);
+    font-size: 9px;
+    letter-spacing: .2em;
+}
+
+@media (max-width: 700px) {
+    .archive-rooms,
+    .archive-tools,
+    .archive-record-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .archive-entrance {
+        padding: 45px 15px;
+    }
+
+    .archive-room {
+        min-height: 230px;
+        padding: 22px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .archive-room {
+        transition: none;
+    }
+}
+
+/* Historical document and memory collections */
+
+.archive-collection-browser {
+    margin-top: 35px;
+}
+
+.archive-collection-browser > h3 {
+    font-size: 28px;
+}
+
+.archive-record .archive-eyebrow {
+    line-height: 1.6;
+    text-transform: uppercase;
+}
+
+.archive-related {
+    border-top: 1px solid var(--archive-border);
+    padding-top: 24px;
+}
+
+.archive-related h3 {
+    font-size: 24px;
+    margin: 24px 0 15px;
+}
+
+.archive-related .archive-record {
+    margin-bottom: 12px;
+}
+
+.archive-source-excerpt {
+    border-left: 2px solid var(--archive-gold);
+    margin: 20px 0;
+    padding: 15px 22px;
+    color: var(--archive-muted);
+    font-family: Georgia, serif;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
