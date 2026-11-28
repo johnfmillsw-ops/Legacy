@@ -1,0 +1,113 @@
+
+        .legacy-account-menu {
+            position: relative;
+        }
+
+        .legacy-account-menu summary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            list-style: none;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .legacy-account-menu summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .legacy-account-menu summary:hover {
+            background: var(--surface-raised);
+        }
+
+        .legacy-account-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border: 1px solid var(--accent);
+            border-radius: 50%;
+            color: var(--accent);
+            font-family: var(--font-heading);
+            font-size: 17px;
+        }
+
+        .legacy-account-name {
+            min-width: 0;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+
+        .legacy-account-dropdown {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            min-width: 190px;
+            padding: 6px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+            z-index: 120;
+        }
+
+        .legacy-account-dropdown a,
+        .legacy-account-dropdown button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 11px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-secondary);
+            text-align: left;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .legacy-account-dropdown a:hover,
+        .legacy-account-dropdown button:hover {
+            background: var(--surface-raised);
+            color: var(--accent);
+        }
+
+        .legacy-account-dropdown svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .legacy-mobile-header {
+            position: relative;
+            z-index: 110;
+        }
+
+        .legacy-mobile-header .legacy-account-dropdown {
+            top: calc(100% + 8px);
+            bottom: auto;
+            left: auto;
+            right: 0;
+        }
+
+        .legacy-mobile-header .legacy-account-name,
+        .legacy-mobile-header .legacy-account-chevron {
+            display: none;
+        }
+
+        .legacy-account-dropdown form {
+            margin: 0;
+        }
+
+        .legacy-brand-name {
+            color: var(--accent);
+        }
+    
